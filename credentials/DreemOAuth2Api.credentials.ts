@@ -9,26 +9,9 @@ export class DreemOAuth2Api implements ICredentialType {
 	name = 'dreemOAuth2Api';
 	extends = ['oAuth2Api'];
 	displayName = 'Dreem OAuth2 API';
-	documentationUrl = 'https://docs.dreem.ai/oauth';
+	documentationUrl = 'https://docs.dreem.ai/integrations/n8n';
 
 	properties: INodeProperties[] = [
-		{
-			displayName: 'Environment',
-			name: 'environment',
-			type: 'options',
-			options: [
-				{
-					name: 'Production',
-					value: 'production',
-				},
-				{
-					name: 'Development',
-					value: 'development',
-				},
-			],
-			default: 'production',
-			description: 'Select the Dreem environment to connect to',
-		},
 		{
 			displayName: 'Grant Type',
 			name: 'grantType',
@@ -56,16 +39,14 @@ export class DreemOAuth2Api implements ICredentialType {
 			displayName: 'Authorization URL',
 			name: 'authUrl',
 			type: 'hidden',
-			default:
-				'={{$self["environment"] === "development" ? "https://accounts.dev.dreem.ai/connect/authorize" : "https://account.dreem.ai/connect/authorize"}}',
+			default: `${process.env.DREEM_ACCOUNTS_API_BASE_URL || 'https://accounts.dreem.ai'}/connect/authorize`,
 			required: true,
 		},
 		{
 			displayName: 'Access Token URL',
 			name: 'accessTokenUrl',
 			type: 'hidden',
-			default:
-				'={{$self["environment"] === "development" ? "https://accounts.dev.dreem.ai/connect/token" : "https://account.dreem.ai/connect/token"}}',
+			default: `${process.env.DREEM_ACCOUNTS_API_BASE_URL || 'https://accounts.dreem.ai'}/connect/token`,
 			required: true,
 		},
 		{
@@ -134,8 +115,7 @@ export class DreemOAuth2Api implements ICredentialType {
 	};
 	test: ICredentialTestRequest = {
 		request: {
-			baseURL:
-				'={{$credentials.environment === "development" ? "https://gateway.dev.dreem.ai" : "https://gateway.dreem.ai"}}',
+			baseURL: process.env.DREEM_API_BASE_URL || 'https://gateway.dreem.ai',
 			url: '/studio/resources/talent-options',
 			method: 'GET',
 		},

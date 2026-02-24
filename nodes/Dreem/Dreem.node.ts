@@ -9,21 +9,9 @@ import type {
 } from 'n8n-workflow';
 import { NodeApiError, NodeOperationError } from 'n8n-workflow';
 
-// Helper function to get base URL from credentials
-async function getBaseUrl(
-	context: IExecuteFunctions | ILoadOptionsFunctions,
-	credentialType: string,
-): Promise<string> {
-	try {
-		const credentials = await context.getCredentials(credentialType);
-		const environment = (credentials.environment as string) || 'production';
-		return environment === 'development'
-			? 'https://gateway.dev.dreem.ai'
-			: 'https://gateway.dreem.ai';
-	} catch {
-		// Default to production if credentials not available
-		return 'https://gateway.dreem.ai';
-	}
+// Helper function to get base URL from environment variable
+function getBaseUrl(): string {
+	return process.env.DREEM_API_BASE_URL || 'https://gateway.dreem.ai';
 }
 
 export class Dreem implements INodeType {
@@ -60,13 +48,6 @@ export class Dreem implements INodeType {
 				},
 			},
 		],
-		requestDefaults: {
-			baseURL: 'https://gateway.dreem.ai/styleguide',
-			headers: {
-				Accept: 'application/json',
-				'Content-Type': 'application/json',
-			},
-		},
 		properties: [
 			{
 				displayName: 'Authentication',
@@ -716,7 +697,7 @@ export class Dreem implements INodeType {
 						: 'dreemOAuth2Api';
 				const returnData: INodePropertyOptions[] = [];
 				try {
-					const baseURL = await getBaseUrl(this, credentialType);
+					const baseURL = getBaseUrl();
 
 					const apiResponse = (await this.helpers.httpRequestWithAuthentication.call(
 						this,
@@ -767,7 +748,7 @@ export class Dreem implements INodeType {
 						: 'dreemOAuth2Api';
 				const returnData: INodePropertyOptions[] = [];
 				try {
-					const baseURL = await getBaseUrl(this, credentialType);
+					const baseURL = getBaseUrl();
 
 					const apiResponse = (await this.helpers.httpRequestWithAuthentication.call(
 						this,
@@ -825,8 +806,8 @@ export class Dreem implements INodeType {
 		const authentication = this.getNodeParameter('authentication', 0) as 'oAuth2' | 'apiKey';
 		const credentialType = authentication === 'apiKey' ? 'dreemApi' : 'dreemOAuth2Api';
 
-		// Get base URL from credentials
-		const baseURL = await getBaseUrl(this, credentialType);
+		// Get base URL from environment variable
+		const baseURL = getBaseUrl();
 
 		for (let i = 0; i < items.length; i++) {
 			try {

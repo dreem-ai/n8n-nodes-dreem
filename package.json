@@ -15,15 +15,15 @@
         "type": "git",
         "url": "https://github.com/dreem/n8n-nodes-dreem.git"
     },
-   "scripts": {
-		"build": "n8n-node build",
-		"build:watch": "tsc --watch",
-		"dev": "n8n-node dev",
-		"lint": "n8n-node lint",
-		"lint:fix": "n8n-node lint --fix",
-		"release": "n8n-node release",
-		"prepublishOnly": "n8n-node prerelease"
-	},
+    "scripts": {
+        "build": "dotenv -- n8n-node build",
+        "build:watch": "dotenv -- tsc --watch",
+        "dev": "dotenv -- n8n-node dev",
+        "lint": "n8n-node lint",
+        "lint:fix": "n8n-node lint --fix",
+        "release": "n8n-node release",
+        "prepublishOnly": "n8n-node prerelease"
+    },
     "files": [
         "dist"
     ],
@@ -40,6 +40,7 @@
     },
     "devDependencies": {
         "@n8n/node-cli": "*",
+        "dotenv-cli": "^11.0.0",
         "eslint": "9.32.0",
         "prettier": "3.6.2",
         "release-it": "^19.0.4",
