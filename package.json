@@ -30,9 +30,12 @@
     "n8n": {
         "n8nNodesApiVersion": 1,
         "strict": true,
-        "credentials": [],
+        "credentials": [
+            "dist/credentials/DreemApi.credentials.js",
+            "dist/credentials/DreemOAuth2Api.credentials.js"
+        ],
         "nodes": [
-            "dist/nodes/Example/Example.node.js"
+            "dist/nodes/Dreem/Dreem.node.js"
         ]
     },
     "devDependencies": {
