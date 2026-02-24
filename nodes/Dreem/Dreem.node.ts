@@ -60,6 +60,7 @@ export class Dreem implements INodeType {
 				default: 'oAuth2',
 				description: 'Choose how to authenticate with the Dreem API',
 			},
+
 			// ========================================================
 			// Resource Selection
 			// ========================================================
@@ -70,36 +71,26 @@ export class Dreem implements INodeType {
 				noDataExpression: true,
 				options: [
 					{
-						name: 'Virtual Talent',
-						value: 'virtualTalent',
-						description: 'Generate images with AI models',
+						name: 'Generative Content',
+						value: 'content',
+						description: 'Generate AI-powered content',
 					},
 					{
-						name: 'Product Shot',
-						value: 'packshot',
-						description: 'Generate product shots',
+						name: 'Library',
+						value: 'library',
+						description: 'Browse available talents and shots',
 					},
 					{
-						name: 'Talent',
-						value: 'talent',
-						description: 'Manage AI models',
-					},
-					{
-						name: 'Shot',
-						value: 'shot',
-						description: 'Manage shots',
-					},
-					{
-						name: 'Request',
-						value: 'request',
-						description: 'Check generation request status',
+						name: 'Task',
+						value: 'task',
+						description: 'Track generation task status',
 					},
 				],
-				default: 'virtualTalent',
+				default: 'content',
 			},
 
 			// ========================================================
-			// Virtual Talent Operations
+			// Content Operations
 			// ========================================================
 			{
 				displayName: 'Operation',
@@ -108,21 +99,31 @@ export class Dreem implements INodeType {
 				noDataExpression: true,
 				displayOptions: {
 					show: {
-						resource: ['virtualTalent'],
+						resource: ['content'],
 					},
 				},
 				options: [
 					{
-						name: 'Generate',
-						value: 'generate',
-						description: 'Generate virtual talent images',
-						action: 'Generate virtual talent images',
+						name: 'Generate Model Shots',
+						value: 'generateModelShots',
+						description: 'Try your product on different models and shots',
+						action: 'Generate model shots',
+					},
+					{
+						name: 'Generate Product Shots',
+						value: 'generateProductShots',
+						description: 'Generate clean, studio-style product shots',
+						action: 'Generate product shots',
 					},
 				],
-				default: 'generate',
+				default: 'generateModelShots',
 			},
 
-			// Generate Virtual Talent - Talent Selection
+			// --------------------------------------------------------
+			// Content > Generate Model Shots — Fields
+			// --------------------------------------------------------
+
+			// Talent Selection
 			{
 				displayName: 'Talent',
 				name: 'talentId',
@@ -131,8 +132,8 @@ export class Dreem implements INodeType {
 				required: true,
 				displayOptions: {
 					show: {
-						resource: ['virtualTalent'],
-						operation: ['generate'],
+						resource: ['content'],
+						operation: ['generateModelShots'],
 					},
 				},
 				description: 'The AI model to use for generation',
@@ -165,19 +166,20 @@ export class Dreem implements INodeType {
 				],
 			},
 
-			// Shots Selection
+			// Shots Selection (Model Shots)
 			{
-				displayName: 'Shot',
+				displayName: 'Shots',
 				name: 'shotCodes',
 				type: 'multiOptions',
 				typeOptions: {
 					loadOptionsMethod: 'getShots',
+					loadOptionsDependsOn: ['operation'],
 				},
 				required: true,
 				displayOptions: {
 					show: {
-						resource: ['virtualTalent'],
-						operation: ['generate'],
+						resource: ['content'],
+						operation: ['generateModelShots'],
 					},
 				},
 				default: [],
@@ -191,8 +193,8 @@ export class Dreem implements INodeType {
 				type: 'options',
 				displayOptions: {
 					show: {
-						resource: ['virtualTalent'],
-						operation: ['generate'],
+						resource: ['content'],
+						operation: ['generateModelShots'],
 					},
 				},
 				options: [
@@ -227,8 +229,8 @@ export class Dreem implements INodeType {
 				required: true,
 				displayOptions: {
 					show: {
-						resource: ['virtualTalent'],
-						operation: ['generate'],
+						resource: ['content'],
+						operation: ['generateModelShots'],
 						imageInputMode: ['manual'],
 					},
 				},
@@ -285,8 +287,8 @@ export class Dreem implements INodeType {
 				required: true,
 				displayOptions: {
 					show: {
-						resource: ['virtualTalent'],
-						operation: ['generate'],
+						resource: ['content'],
+						operation: ['generateModelShots'],
 						imageInputMode: ['json'],
 					},
 				},
@@ -303,8 +305,8 @@ export class Dreem implements INodeType {
 				required: true,
 				displayOptions: {
 					show: {
-						resource: ['virtualTalent'],
-						operation: ['generate'],
+						resource: ['content'],
+						operation: ['generateModelShots'],
 						imageInputMode: ['urlList'],
 					},
 				},
@@ -318,8 +320,8 @@ export class Dreem implements INodeType {
 				type: 'options',
 				displayOptions: {
 					show: {
-						resource: ['virtualTalent'],
-						operation: ['generate'],
+						resource: ['content'],
+						operation: ['generateModelShots'],
 						imageInputMode: ['urlList'],
 					},
 				},
@@ -336,8 +338,8 @@ export class Dreem implements INodeType {
 				type: 'options',
 				displayOptions: {
 					show: {
-						resource: ['virtualTalent'],
-						operation: ['generate'],
+						resource: ['content'],
+						operation: ['generateModelShots'],
 						imageInputMode: ['urlList'],
 					},
 				},
@@ -349,7 +351,7 @@ export class Dreem implements INodeType {
 				description: 'View type applied to all URLs in the list',
 			},
 
-			// Output Format (Required)
+			// Output Format (Model Shots)
 			{
 				displayName: 'Output Format',
 				name: 'outputFormat',
@@ -357,8 +359,8 @@ export class Dreem implements INodeType {
 				required: true,
 				displayOptions: {
 					show: {
-						resource: ['virtualTalent'],
-						operation: ['generate'],
+						resource: ['content'],
+						operation: ['generateModelShots'],
 					},
 				},
 				options: [
@@ -369,7 +371,7 @@ export class Dreem implements INodeType {
 				description: 'Output image format',
 			},
 
-			// Output Aspect Ratio (Required)
+			// Output Aspect Ratio (Model Shots)
 			{
 				displayName: 'Output Aspect Ratio',
 				name: 'outputAspectRatio',
@@ -377,8 +379,8 @@ export class Dreem implements INodeType {
 				required: true,
 				displayOptions: {
 					show: {
-						resource: ['virtualTalent'],
-						operation: ['generate'],
+						resource: ['content'],
+						operation: ['generateModelShots'],
 					},
 				},
 				options: [
@@ -397,7 +399,7 @@ export class Dreem implements INodeType {
 				description: 'Aspect ratio for the generated image',
 			},
 
-			// Callback URL (Required)
+			// Callback URL (Model Shots)
 			{
 				displayName: 'Webhook URL',
 				name: 'callbackUrl',
@@ -405,8 +407,8 @@ export class Dreem implements INodeType {
 				required: true,
 				displayOptions: {
 					show: {
-						resource: ['virtualTalent'],
-						operation: ['generate'],
+						resource: ['content'],
+						operation: ['generateModelShots'],
 					},
 				},
 				default: '',
@@ -414,7 +416,7 @@ export class Dreem implements INodeType {
 				placeholder: 'https://webhook.site/your-unique-url',
 			},
 
-			// Additional Options
+			// Additional Options (Model Shots)
 			{
 				displayName: 'Additional Options',
 				name: 'additionalOptions',
@@ -423,8 +425,8 @@ export class Dreem implements INodeType {
 				default: {},
 				displayOptions: {
 					show: {
-						resource: ['virtualTalent'],
-						operation: ['generate'],
+						resource: ['content'],
+						operation: ['generateModelShots'],
 					},
 				},
 				options: [
@@ -449,90 +451,31 @@ export class Dreem implements INodeType {
 				],
 			},
 
-			// ========================================================
-			// Request Operations
-			// ========================================================
-			{
-				displayName: 'Operation',
-				name: 'operation',
-				type: 'options',
-				noDataExpression: true,
-				displayOptions: {
-					show: {
-						resource: ['request'],
-					},
-				},
-				options: [
-					{
-						name: 'Get Status',
-						value: 'getStatus',
-						description: 'Check generation request status',
-						action: 'Get generation request status',
-					},
-				],
-				default: 'getStatus',
-			},
+			// --------------------------------------------------------
+			// Content > Generate Product Shots — Fields
+			// --------------------------------------------------------
 
-			// Get Status - Request ID
+			// Shots Selection (Product Shots)
 			{
-				displayName: 'Request ID',
-				name: 'requestId',
-				type: 'string',
-				required: true,
-				displayOptions: {
-					show: {
-						resource: ['request'],
-						operation: ['getStatus'],
-					},
-				},
-				default: '',
-				description: 'The request ID returned from generation request',
-				placeholder: 'e.g. 550e8400-e29b-41d4-a716-446655440000',
-			},
-
-			// ========================================================
-			// Packshot Operations
-			// ========================================================
-			{
-				displayName: 'Operation',
-				name: 'operation',
-				type: 'options',
-				noDataExpression: true,
-				displayOptions: {
-					show: {
-						resource: ['packshot'],
-					},
-				},
-				options: [
-					{
-						name: 'Generate',
-						value: 'generate',
-						description: 'Generate product shots',
-						action: 'Generate product shots',
-					},
-				],
-				default: 'generate',
-			},
-
-			// Packshot - Shots
-			{
-				displayName: 'Shot',
+				displayName: 'Shots',
 				name: 'shotCodes',
 				type: 'multiOptions',
 				typeOptions: {
 					loadOptionsMethod: 'getShots',
+					loadOptionsDependsOn: ['operation'],
 				},
 				required: true,
 				displayOptions: {
 					show: {
-						resource: ['packshot'],
-						operation: ['generate'],
+						resource: ['content'],
+						operation: ['generateProductShots'],
 					},
 				},
 				default: [],
 				description: 'Shots to generate for product shot (e.g., Flat Lay Front, Flat Lay Back, etc.)',
 			},
-			// Packshot - Product Image
+
+			// Product Image URL
 			{
 				displayName: 'Product Image URL',
 				name: 'imageUrl',
@@ -540,8 +483,8 @@ export class Dreem implements INodeType {
 				required: true,
 				displayOptions: {
 					show: {
-						resource: ['packshot'],
-						operation: ['generate'],
+						resource: ['content'],
+						operation: ['generateProductShots'],
 					},
 				},
 				default: '',
@@ -549,7 +492,7 @@ export class Dreem implements INodeType {
 				placeholder: 'https://example.com/product.jpg',
 			},
 
-			// Packshot - Output Format (Required)
+			// Output Format (Product Shots)
 			{
 				displayName: 'Output Format',
 				name: 'outputFormat',
@@ -557,8 +500,8 @@ export class Dreem implements INodeType {
 				required: true,
 				displayOptions: {
 					show: {
-						resource: ['packshot'],
-						operation: ['generate'],
+						resource: ['content'],
+						operation: ['generateProductShots'],
 					},
 				},
 				options: [
@@ -569,7 +512,7 @@ export class Dreem implements INodeType {
 				description: 'Output image format',
 			},
 
-			// Packshot - Output Aspect Ratio (Required)
+			// Output Aspect Ratio (Product Shots)
 			{
 				displayName: 'Output Aspect Ratio',
 				name: 'outputAspectRatio',
@@ -577,8 +520,8 @@ export class Dreem implements INodeType {
 				required: true,
 				displayOptions: {
 					show: {
-						resource: ['packshot'],
-						operation: ['generate'],
+						resource: ['content'],
+						operation: ['generateProductShots'],
 					},
 				},
 				options: [
@@ -597,7 +540,7 @@ export class Dreem implements INodeType {
 				description: 'Aspect ratio for the generated image',
 			},
 
-			// Packshot - Additional Options
+			// Additional Options (Product Shots)
 			{
 				displayName: 'Additional Options',
 				name: 'additionalOptions',
@@ -606,8 +549,8 @@ export class Dreem implements INodeType {
 				default: {},
 				displayOptions: {
 					show: {
-						resource: ['packshot'],
-						operation: ['generate'],
+						resource: ['content'],
+						operation: ['generateProductShots'],
 					},
 				},
 				options: [
@@ -639,7 +582,7 @@ export class Dreem implements INodeType {
 			},
 
 			// ========================================================
-			// Talent Operations (List)
+			// Library Operations
 			// ========================================================
 			{
 				displayName: 'Operation',
@@ -648,22 +591,28 @@ export class Dreem implements INodeType {
 				noDataExpression: true,
 				displayOptions: {
 					show: {
-						resource: ['talent'],
+						resource: ['library'],
 					},
 				},
 				options: [
 					{
-						name: 'Get Many',
-						value: 'getAll',
+						name: 'Get Available Talents',
+						value: 'getAvailableTalents',
 						description: 'List all available AI models',
-						action: 'Get many AI models',
+						action: 'Get available talents',
+					},
+					{
+						name: 'Get Available Shots',
+						value: 'getAvailableShots',
+						description: 'List all available shots',
+						action: 'Get available shots',
 					},
 				],
-				default: 'getAll',
+				default: 'getAvailableTalents',
 			},
 
 			// ========================================================
-			// Shot Operations (List)
+			// Task Operations
 			// ========================================================
 			{
 				displayName: 'Operation',
@@ -672,24 +621,42 @@ export class Dreem implements INodeType {
 				noDataExpression: true,
 				displayOptions: {
 					show: {
-						resource: ['shot'],
+						resource: ['task'],
 					},
 				},
 				options: [
 					{
-						name: 'Get Many',
-						value: 'getAll',
-						description: 'List all available shots',
-						action: 'Get many shots',
+						name: 'Get Status',
+						value: 'getStatus',
+						description: 'Check generation task status',
+						action: 'Get generation task status',
 					},
 				],
-				default: 'getAll',
+				default: 'getStatus',
+			},
+
+			// Get Status - Request ID
+			{
+				displayName: 'Request ID',
+				name: 'requestId',
+				type: 'string',
+				required: true,
+				displayOptions: {
+					show: {
+						resource: ['task'],
+						operation: ['getStatus'],
+					},
+				},
+				default: '',
+				description: 'The request ID returned from a generation task',
+				placeholder: 'e.g. 550e8400-e29b-41d4-a716-446655440000',
 			},
 		],
 	};
+
 	methods = {
 		loadOptions: {
-			// Load shots for dropdown
+			// Load shots for dropdown, filtered by shotType based on operation
 			async getShots(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
 				const credentialType =
 					(this.getNodeParameter('authentication', 0) as string) === 'apiKey'
@@ -699,6 +666,10 @@ export class Dreem implements INodeType {
 				try {
 					const baseURL = getBaseUrl();
 
+					// Filter shots by shotType: generateModelShots = 1, generateProductShots = 0
+					const operation = this.getNodeParameter('operation', 0) as string;
+					const shotType = operation === 'generateModelShots' ? 1 : 0;
+
 					const apiResponse = (await this.helpers.httpRequestWithAuthentication.call(
 						this,
 						credentialType,
@@ -706,6 +677,7 @@ export class Dreem implements INodeType {
 							method: 'GET',
 							baseURL,
 							url: '/styleguide/resources/shots',
+							qs: { shotType },
 						},
 					)) as any;
 
@@ -811,8 +783,11 @@ export class Dreem implements INodeType {
 
 		for (let i = 0; i < items.length; i++) {
 			try {
-				if (resource === 'virtualTalent') {
-					if (operation === 'generate') {
+				// ==============================================
+				// Resource: Content
+				// ==============================================
+				if (resource === 'content') {
+					if (operation === 'generateModelShots') {
 						const talentId = this.getNodeParameter('talentId', i, '', {
 							extractValue: true,
 						}) as string;
@@ -941,28 +916,7 @@ export class Dreem implements INodeType {
 							json: response as JsonObject,
 							pairedItem: { item: i },
 						});
-					}
-				} else if (resource === 'request') {
-					if (operation === 'getStatus') {
-						const requestId = this.getNodeParameter('requestId', i) as string;
-
-						const response = await this.helpers.httpRequestWithAuthentication.call(
-							this,
-							credentialType,
-							{
-								method: 'GET',
-								baseURL,
-								url: `/studio/requests/${requestId}`,
-							},
-						);
-
-						returnData.push({
-							json: response as JsonObject,
-							pairedItem: { item: i },
-						});
-					}
-				} else if (resource === 'packshot') {
-					if (operation === 'generate') {
+					} else if (operation === 'generateProductShots') {
 						const shotCodes = this.getNodeParameter('shotCodes', i) as string[];
 						const imageUrl = this.getNodeParameter('imageUrl', i) as string;
 						const outputFormat = this.getNodeParameter('outputFormat', i) as number;
@@ -1006,8 +960,13 @@ export class Dreem implements INodeType {
 							pairedItem: { item: i },
 						});
 					}
-				} else if (resource === 'talent') {
-					if (operation === 'getAll') {
+				}
+
+				// ==============================================
+				// Resource: Library
+				// ==============================================
+				else if (resource === 'library') {
+					if (operation === 'getAvailableTalents') {
 						const apiResponse = (await this.helpers.httpRequestWithAuthentication.call(
 							this,
 							credentialType,
@@ -1039,9 +998,7 @@ export class Dreem implements INodeType {
 								pairedItem: { item: i },
 							});
 						}
-					}
-				} else if (resource === 'shot') {
-					if (operation === 'getAll') {
+					} else if (operation === 'getAvailableShots') {
 						const apiResponse = (await this.helpers.httpRequestWithAuthentication.call(
 							this,
 							credentialType,
@@ -1073,6 +1030,30 @@ export class Dreem implements INodeType {
 								pairedItem: { item: i },
 							});
 						}
+					}
+				}
+
+				// ==============================================
+				// Resource: Task
+				// ==============================================
+				else if (resource === 'task') {
+					if (operation === 'getStatus') {
+						const requestId = this.getNodeParameter('requestId', i) as string;
+
+						const response = await this.helpers.httpRequestWithAuthentication.call(
+							this,
+							credentialType,
+							{
+								method: 'GET',
+								baseURL,
+								url: `/studio/requests/${requestId}`,
+							},
+						);
+
+						returnData.push({
+							json: response as JsonObject,
+							pairedItem: { item: i },
+						});
 					}
 				}
 			} catch (error) {
