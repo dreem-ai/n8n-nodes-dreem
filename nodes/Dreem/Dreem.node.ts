@@ -77,7 +77,7 @@ export class Dreem implements INodeType {
 					{
 						name: 'Product Shot',
 						value: 'packshot',
-						description: 'Generate product packshots',
+						description: 'Generate product shots',
 					},
 					{
 						name: 'Talent',
@@ -86,8 +86,8 @@ export class Dreem implements INodeType {
 					},
 					{
 						name: 'Shot',
-						value: 'shotType',
-						description: 'Manage shot types',
+						value: 'shot',
+						description: 'Manage shots',
 					},
 					{
 						name: 'Request',
@@ -165,13 +165,13 @@ export class Dreem implements INodeType {
 				],
 			},
 
-			// Shot Types Selection
+			// Shots Selection
 			{
 				displayName: 'Shot',
 				name: 'shotCodes',
 				type: 'multiOptions',
 				typeOptions: {
-					loadOptionsMethod: 'getShotTypes',
+					loadOptionsMethod: 'getShots',
 				},
 				required: true,
 				displayOptions: {
@@ -181,7 +181,7 @@ export class Dreem implements INodeType {
 					},
 				},
 				default: [],
-				description: 'Shot types to generate (e.g., portrait, full-body)',
+				description: 'Shots to generate (e.g., Front, Back, Walk, etc.)',
 			},
 
 			// Image Input Mode Selector
@@ -507,20 +507,20 @@ export class Dreem implements INodeType {
 					{
 						name: 'Generate',
 						value: 'generate',
-						description: 'Generate product packshots',
-						action: 'Generate product packshots',
+						description: 'Generate product shots',
+						action: 'Generate product shots',
 					},
 				],
 				default: 'generate',
 			},
 
-			// Packshot - Shot Types
+			// Packshot - Shots
 			{
 				displayName: 'Shot',
 				name: 'shotCodes',
 				type: 'multiOptions',
 				typeOptions: {
-					loadOptionsMethod: 'getShotTypes',
+					loadOptionsMethod: 'getShots',
 				},
 				required: true,
 				displayOptions: {
@@ -530,7 +530,7 @@ export class Dreem implements INodeType {
 					},
 				},
 				default: [],
-				description: 'Shot types to generate for packshot',
+				description: 'Shots to generate for product shot (e.g., Flat Lay Front, Flat Lay Back, etc.)',
 			},
 			// Packshot - Product Image
 			{
@@ -663,7 +663,7 @@ export class Dreem implements INodeType {
 			},
 
 			// ========================================================
-			// Shot Type Operations (List)
+			// Shot Operations (List)
 			// ========================================================
 			{
 				displayName: 'Operation',
@@ -672,15 +672,15 @@ export class Dreem implements INodeType {
 				noDataExpression: true,
 				displayOptions: {
 					show: {
-						resource: ['shotType'],
+						resource: ['shot'],
 					},
 				},
 				options: [
 					{
 						name: 'Get Many',
 						value: 'getAll',
-						description: 'List all available shot types',
-						action: 'Get many shot types',
+						description: 'List all available shots',
+						action: 'Get many shots',
 					},
 				],
 				default: 'getAll',
@@ -689,8 +689,8 @@ export class Dreem implements INodeType {
 	};
 	methods = {
 		loadOptions: {
-			// Load shot types for dropdown
-			async getShotTypes(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+			// Load shots for dropdown
+			async getShots(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
 				const credentialType =
 					(this.getNodeParameter('authentication', 0) as string) === 'apiKey'
 						? 'dreemApi'
@@ -1040,7 +1040,7 @@ export class Dreem implements INodeType {
 							});
 						}
 					}
-				} else if (resource === 'shotType') {
+				} else if (resource === 'shot') {
 					if (operation === 'getAll') {
 						const apiResponse = (await this.helpers.httpRequestWithAuthentication.call(
 							this,
@@ -1053,23 +1053,23 @@ export class Dreem implements INodeType {
 						)) as any;
 
 						// Handle different response structures
-						let shotTypes: any[] = [];
+						let shots: any[] = [];
 
 						if (Array.isArray(apiResponse)) {
-							shotTypes = apiResponse;
+							shots = apiResponse;
 						} else if (apiResponse?.data) {
 							if (Array.isArray(apiResponse.data)) {
-								shotTypes = apiResponse.data;
+								shots = apiResponse.data;
 							} else if (apiResponse.data.pageData && Array.isArray(apiResponse.data.pageData)) {
-								shotTypes = apiResponse.data.pageData;
+								shots = apiResponse.data.pageData;
 							} else if (typeof apiResponse.data === 'object') {
-								shotTypes = [apiResponse.data];
+								shots = [apiResponse.data];
 							}
 						}
 
-						for (const shotType of shotTypes) {
+						for (const shot of shots) {
 							returnData.push({
-								json: shotType,
+								json: shot,
 								pairedItem: { item: i },
 							});
 						}
