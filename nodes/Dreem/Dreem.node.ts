@@ -127,8 +127,11 @@ export class Dreem implements INodeType {
 			{
 				displayName: 'Talent',
 				name: 'talentId',
-				type: 'resourceLocator',
-				default: { mode: 'list', value: '' },
+				type: 'options',
+				typeOptions: {
+					loadOptionsMethod: 'getTalents',
+				},
+				default: '',
 				required: true,
 				displayOptions: {
 					show: {
@@ -137,36 +140,9 @@ export class Dreem implements INodeType {
 					},
 				},
 				description: 'The AI model to use for generation',
-				modes: [
-					{
-						displayName: 'From List',
-						name: 'list',
-						type: 'list',
-						typeOptions: {
-							searchListMethod: 'searchTalents',
-							searchable: true,
-						},
-					},
-					{
-						displayName: 'By ID',
-						name: 'id',
-						type: 'string',
-						validation: [
-							{
-								type: 'regex',
-								properties: {
-									regex:
-										'^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$',
-									errorMessage: 'Not a valid Talent ID (UUID)',
-								},
-							},
-						],
-						placeholder: 'e.g. B09111F6-57E3-4D6F-A917-B8281CF534EC',
-					},
-				],
 			},
 
-			// Shots Selection (Model Shots)
+			// Shots Selection (Model Shots & Product Shots)
 			{
 				displayName: 'Shots',
 				name: 'shotCodes',
@@ -179,63 +155,63 @@ export class Dreem implements INodeType {
 				displayOptions: {
 					show: {
 						resource: ['content'],
-						operation: ['generateModelShots'],
+						operation: ['generateModelShots', 'generateProductShots'],
 					},
 				},
 				default: [],
-				description: 'Shots to generate (e.g., Front, Back, Walk, etc.)',
+				description: 'Shots to generate',
 			},
 
-			// Image Input Mode Selector
+			// Front Image URL (required)
 			{
-				displayName: 'Image Input Mode',
-				name: 'imageInputMode',
-				type: 'options',
-				displayOptions: {
-					show: {
-						resource: ['content'],
-						operation: ['generateModelShots'],
-					},
-				},
-				options: [
-					{
-						name: 'Manual',
-						value: 'manual',
-						description: 'Enter each image URL, product type, and view type manually',
-					},
-					{
-						name: 'JSON',
-						value: 'json',
-						description: 'Provide a JSON array of image objects (e.g. from a previous node)',
-					},
-					{
-						name: 'URL List',
-						value: 'urlList',
-						description: 'Provide a list of URLs with shared default product/view type',
-					},
-				],
-				default: 'manual',
-				description: 'How to provide product images for generation',
-			},
-
-			// Product Images - Manual Mode (fixedCollection)
-			{
-				displayName: 'Product Images',
-				name: 'images',
-				type: 'fixedCollection',
-				typeOptions: {
-					multipleValues: true,
-				},
+				displayName: 'Front Image URL',
+				name: 'frontImageUrl',
+				type: 'string',
 				required: true,
 				displayOptions: {
 					show: {
 						resource: ['content'],
+						operation: ['generateModelShots', 'generateProductShots'],
+					},
+				},
+				default: '',
+				description: 'URL of the front product image',
+				placeholder: 'https://example.com/front.jpg',
+			},
+
+			// Back Image URL (optional)
+			{
+				displayName: 'Back Image URL',
+				name: 'backImageUrl',
+				type: 'string',
+				displayOptions: {
+					show: {
+						resource: ['content'],
+						operation: ['generateModelShots', 'generateProductShots'],
+					},
+				},
+				default: '',
+				description: 'URL of the back product image (optional)',
+				placeholder: 'https://example.com/back.jpg',
+			},
+
+			// Styling Image URLs (optional, repeatable)
+			{
+				displayName: 'Styling Image URLs',
+				name: 'stylingImageUrls',
+				type: 'fixedCollection',
+				typeOptions: {
+					multipleValues: true,
+				},
+				displayOptions: {
+					show: {
+						resource: ['content'],
 						operation: ['generateModelShots'],
-						imageInputMode: ['manual'],
 					},
 				},
 				default: {},
 				placeholder: 'Add Image',
+				description: 'Styling/outfit images to include in generation',
 				options: [
 					{
 						name: 'imageValues',
@@ -246,112 +222,16 @@ export class Dreem implements INodeType {
 								name: 'url',
 								type: 'string',
 								default: '',
-								description: 'URL of the product image',
+								description: 'URL of the styling image',
 								required: true,
-								placeholder: 'https://example.com/product.jpg',
-							},
-							{
-								displayName: 'Product Type',
-								name: 'productType',
-								type: 'options',
-								options: [
-									{ name: 'Main', value: 0 },
-									{ name: 'Outfit', value: 1 },
-								],
-								default: 0,
-								description:
-									'Type of product in the image (Main = primary product, Outfit = clothing/accessory)',
-							},
-							{
-								displayName: 'View Type',
-								name: 'viewType',
-								type: 'options',
-								options: [
-									{ name: 'Front', value: 0 },
-									{ name: 'Back', value: 1 },
-								],
-								default: 0,
-								description: 'View angle of the product image',
+								placeholder: 'https://example.com/outfit.jpg',
 							},
 						],
 					},
 				],
-				description: 'Product images to use in generation',
 			},
 
-			// Product Images - JSON Mode
-			{
-				displayName: 'Images JSON',
-				name: 'imagesJson',
-				type: 'json',
-				required: true,
-				displayOptions: {
-					show: {
-						resource: ['content'],
-						operation: ['generateModelShots'],
-						imageInputMode: ['json'],
-					},
-				},
-				default: '[\n  {\n    "url": "https://example.com/product.jpg",\n    "productType": 0,\n    "viewType": 0\n  }\n]',
-				description: 'JSON array of image objects. Each object must have "url" (string), "productType" (0=Main, 1=Outfit), and "viewType" (0=Front, 1=Back). Use an expression like {{ $json.images }} to pass data from a previous node.',
-				placeholder: '{{ $json.images }}',
-			},
-
-			// Product Images - URL List Mode
-			{
-				displayName: 'Image URLs',
-				name: 'imageUrls',
-				type: 'string',
-				required: true,
-				displayOptions: {
-					show: {
-						resource: ['content'],
-						operation: ['generateModelShots'],
-						imageInputMode: ['urlList'],
-					},
-				},
-				default: '',
-				description: 'Comma-separated list of image URLs, or an expression returning a string array (e.g. {{ $json.urls }}). All images will use the default product type and view type below.',
-				placeholder: 'https://example.com/front.jpg, https://example.com/back.jpg',
-			},
-			{
-				displayName: 'Default Product Type',
-				name: 'defaultProductType',
-				type: 'options',
-				displayOptions: {
-					show: {
-						resource: ['content'],
-						operation: ['generateModelShots'],
-						imageInputMode: ['urlList'],
-					},
-				},
-				options: [
-					{ name: 'Main', value: 0 },
-					{ name: 'Outfit', value: 1 },
-				],
-				default: 0,
-				description: 'Product type applied to all URLs in the list',
-			},
-			{
-				displayName: 'Default View Type',
-				name: 'defaultViewType',
-				type: 'options',
-				displayOptions: {
-					show: {
-						resource: ['content'],
-						operation: ['generateModelShots'],
-						imageInputMode: ['urlList'],
-					},
-				},
-				options: [
-					{ name: 'Front', value: 0 },
-					{ name: 'Back', value: 1 },
-				],
-				default: 0,
-				description: 'View type applied to all URLs in the list',
-			},
-
-			// Output Format (Model Shots)
+			// Output Format (Model Shots & Product Shots)
 			{
 				displayName: 'Output Format',
 				name: 'outputFormat',
@@ -360,18 +240,18 @@ export class Dreem implements INodeType {
 				displayOptions: {
 					show: {
 						resource: ['content'],
-						operation: ['generateModelShots'],
+						operation: ['generateModelShots', 'generateProductShots'],
 					},
 				},
 				options: [
 					{ name: 'PNG', value: 'png' },
 					{ name: 'JPEG', value: 'jpeg' },
 				],
-				default: 0,
+				default: 'png',
 				description: 'Output image format',
 			},
 
-			// Output Aspect Ratio (Model Shots)
+			// Output Aspect Ratio (Model Shots & Product Shots)
 			{
 				displayName: 'Output Aspect Ratio',
 				name: 'outputAspectRatio',
@@ -380,7 +260,7 @@ export class Dreem implements INodeType {
 				displayOptions: {
 					show: {
 						resource: ['content'],
-						operation: ['generateModelShots'],
+						operation: ['generateModelShots', 'generateProductShots'],
 					},
 				},
 				options: [
@@ -395,190 +275,33 @@ export class Dreem implements INodeType {
 					{ name: '16:9 (Landscape)', value: 8 },
 					{ name: '21:9 (Ultrawide)', value: 9 },
 				],
-				default: 0,
+				default: 6,
 				description: 'Aspect ratio for the generated image',
 			},
 
-			// Callback URL (Model Shots)
-			{
-				displayName: 'Webhook URL',
-				name: 'callbackUrl',
-				type: 'string',
-				required: true,
-				displayOptions: {
-					show: {
-						resource: ['content'],
-						operation: ['generateModelShots'],
-					},
-				},
-				default: '',
-				description: 'URL to receive generation results (webhook callback). Required by the API.',
-				placeholder: 'https://webhook.site/your-unique-url',
-			},
 
-			// Additional Options (Model Shots)
-			{
-				displayName: 'Additional Options',
-				name: 'additionalOptions',
-				type: 'collection',
-				placeholder: 'Add Option',
-				default: {},
-				displayOptions: {
-					show: {
-						resource: ['content'],
-						operation: ['generateModelShots'],
-					},
-				},
-				options: [
-					{
-						displayName: 'Webhook Secret',
-						name: 'callbackSecret',
-						type: 'string',
-						typeOptions: {
-							password: true,
-						},
-						default: '',
-						description: 'Secret for HMAC signature verification',
-					},
-					{
-						displayName: 'Custom State',
-						name: 'state',
-						type: 'json',
-						default: '{}',
-						description: 'Custom metadata object (passed through to webhook)',
-						placeholder: '{"orderId": "12345", "source": "n8n"}',
-					},
-				],
-			},
 
 			// --------------------------------------------------------
 			// Content > Generate Product Shots — Fields
 			// --------------------------------------------------------
 
-			// Shots Selection (Product Shots)
-			{
-				displayName: 'Shots',
-				name: 'shotCodes',
-				type: 'multiOptions',
-				typeOptions: {
-					loadOptionsMethod: 'getShots',
-					loadOptionsDependsOn: ['operation'],
-				},
-				required: true,
-				displayOptions: {
-					show: {
-						resource: ['content'],
-						operation: ['generateProductShots'],
-					},
-				},
-				default: [],
-				description: 'Shots to generate for product shot (e.g., Flat Lay Front, Flat Lay Back, etc.)',
-			},
 
-			// Product Image URL
+
+			// Callback URL (shared for Model Shots & Product Shots)
 			{
-				displayName: 'Product Image URL',
-				name: 'imageUrl',
+				displayName: 'Webhook URL',
+				name: 'callbackUrl',
 				type: 'string',
-				required: true,
+				required: false,
 				displayOptions: {
 					show: {
 						resource: ['content'],
-						operation: ['generateProductShots'],
+						operation: ['generateModelShots', 'generateProductShots'],
 					},
 				},
 				default: '',
-				description: 'URL of the product image',
-				placeholder: 'https://example.com/product.jpg',
-			},
-
-			// Output Format (Product Shots)
-			{
-				displayName: 'Output Format',
-				name: 'outputFormat',
-				type: 'options',
-				required: true,
-				displayOptions: {
-					show: {
-						resource: ['content'],
-						operation: ['generateProductShots'],
-					},
-				},
-				options: [
-					{ name: 'PNG', value: 0 },
-					{ name: 'JPEG', value: 1 },
-				],
-				default: 0,
-				description: 'Output image format',
-			},
-
-			// Output Aspect Ratio (Product Shots)
-			{
-				displayName: 'Output Aspect Ratio',
-				name: 'outputAspectRatio',
-				type: 'options',
-				required: true,
-				displayOptions: {
-					show: {
-						resource: ['content'],
-						operation: ['generateProductShots'],
-					},
-				},
-				options: [
-					{ name: '1:1 (Square)', value: 0 },
-					{ name: '4:3', value: 1 },
-					{ name: '3:2', value: 2 },
-					{ name: '2:3', value: 3 },
-					{ name: '5:4', value: 4 },
-					{ name: '4:5', value: 5 },
-					{ name: '3:4', value: 6 },
-					{ name: '9:16 (Portrait)', value: 7 },
-					{ name: '16:9 (Landscape)', value: 8 },
-					{ name: '21:9 (Ultrawide)', value: 9 },
-				],
-				default: 0,
-				description: 'Aspect ratio for the generated image',
-			},
-
-			// Additional Options (Product Shots)
-			{
-				displayName: 'Additional Options',
-				name: 'additionalOptions',
-				type: 'collection',
-				placeholder: 'Add Option',
-				default: {},
-				displayOptions: {
-					show: {
-						resource: ['content'],
-						operation: ['generateProductShots'],
-					},
-				},
-				options: [
-					{
-						displayName: 'Webhook URL',
-						name: 'callbackUrl',
-						type: 'string',
-						default: '',
-						description: 'URL to receive generation results',
-					},
-					{
-						displayName: 'Webhook Secret',
-						name: 'callbackSecret',
-						type: 'string',
-						typeOptions: {
-							password: true,
-						},
-						default: '',
-						description: 'Secret for HMAC signature verification',
-					},
-					{
-						displayName: 'Custom State',
-						name: 'state',
-						type: 'json',
-						default: '{}',
-						description: 'Custom metadata object (passed through to webhook)',
-					},
-				],
+				description: 'URL to receive generation results (webhook callback). Required by the API.',
+				placeholder: 'https://webhook.site/your-unique-url',
 			},
 
 			// ========================================================
@@ -656,6 +379,51 @@ export class Dreem implements INodeType {
 
 	methods = {
 		loadOptions: {
+			// Load talents for dropdown
+			async getTalents(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+				const credentialType =
+					(this.getNodeParameter('authentication', 0) as string) === 'apiKey'
+						? 'dreemApi'
+						: 'dreemOAuth2Api';
+				const returnData: INodePropertyOptions[] = [];
+				try {
+					const baseURL = getBaseUrl();
+
+					const apiResponse = (await this.helpers.httpRequestWithAuthentication.call(
+						this,
+						credentialType,
+						{
+							method: 'GET',
+							baseURL,
+							url: '/studio/resources/talent-options',
+						},
+					)) as any;
+
+					let talents: any[] = [];
+
+					if (Array.isArray(apiResponse)) {
+						talents = apiResponse;
+					} else if (apiResponse?.data) {
+						if (Array.isArray(apiResponse.data)) {
+							talents = apiResponse.data;
+						} else if (apiResponse.data.pageData && Array.isArray(apiResponse.data.pageData)) {
+							talents = apiResponse.data.pageData;
+						}
+					}
+
+					for (const talent of talents) {
+						returnData.push({
+							name: talent.label || talent.name || 'Unknown',
+							value: talent.value || talent.talentId || talent.id,
+						});
+					}
+
+					return returnData;
+				} catch (error) {
+					throw new NodeApiError(this.getNode(), error as JsonObject);
+				}
+			},
+
 			// Load shots for dropdown, filtered by shotType based on operation
 			async getShots(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
 				const credentialType =
@@ -708,65 +476,6 @@ export class Dreem implements INodeType {
 				}
 			},
 		},
-		listSearch: {
-			// Search talents for resource locator
-			async searchTalents(
-				this: ILoadOptionsFunctions,
-				filter?: string,
-			): Promise<{ results: INodePropertyOptions[] }> {
-				const credentialType =
-					(this.getNodeParameter('authentication', 0) as string) === 'apiKey'
-						? 'dreemApi'
-						: 'dreemOAuth2Api';
-				const returnData: INodePropertyOptions[] = [];
-				try {
-					const baseURL = getBaseUrl();
-
-					const apiResponse = (await this.helpers.httpRequestWithAuthentication.call(
-						this,
-						credentialType,
-						{
-							method: 'GET',
-							baseURL,
-							url: '/studio/resources/talent-options',
-						},
-					)) as any;
-
-					// Handle different response structures
-					let talents: any[] = [];
-
-					if (Array.isArray(apiResponse)) {
-						talents = apiResponse;
-					} else if (apiResponse?.data) {
-						if (Array.isArray(apiResponse.data)) {
-							talents = apiResponse.data;
-						} else if (apiResponse.data.pageData && Array.isArray(apiResponse.data.pageData)) {
-							talents = apiResponse.data.pageData;
-						}
-					}
-
-					// Filter results if search term provided
-					if (filter) {
-						const filterLower = filter.toLowerCase();
-						talents = talents.filter((t) => {
-							const label = t.label || t.name || '';
-							return label.toLowerCase().includes(filterLower);
-						});
-					}
-
-					for (const talent of talents) {
-						returnData.push({
-							name: talent.label || talent.name || 'Unknown',
-							value: talent.value || talent.talentId || talent.id,
-						});
-					}
-
-					return { results: returnData };
-				} catch (error) {
-					throw new NodeApiError(this.getNode(), error as JsonObject);
-				}
-			},
-		},
 	};
 
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
@@ -788,89 +497,36 @@ export class Dreem implements INodeType {
 				// ==============================================
 				if (resource === 'content') {
 					if (operation === 'generateModelShots') {
-						const talentId = this.getNodeParameter('talentId', i, '', {
-							extractValue: true,
-						}) as string;
+						const talentId = this.getNodeParameter('talentId', i) as string;
 						const shotCodes = this.getNodeParameter('shotCodes', i) as string[];
 
-						// --- Build imagesList based on imageInputMode ---
-						const imageInputMode = this.getNodeParameter('imageInputMode', i, 'manual') as string;
-						let imagesList: Array<{ url: string; productType: number; viewType: number }> = [];
+						// --- Build imagesList from front/back/styling image fields ---
+						const imagesList: Array<{ url: string; productType: number; viewType?: number }> = [];
 
-						if (imageInputMode === 'manual') {
-							// Manual mode: read from fixedCollection
-							const images = this.getNodeParameter('images', i) as {
-								imageValues?: Array<{ url: string; productType: number; viewType: number }>;
-							};
-							imagesList = images.imageValues || [];
-						} else if (imageInputMode === 'json') {
-							// JSON mode: parse JSON array from expression or literal
-							const imagesJsonRaw = this.getNodeParameter('imagesJson', i) as string | object;
-							let parsed: unknown;
-							if (typeof imagesJsonRaw === 'string') {
-								try {
-									parsed = JSON.parse(imagesJsonRaw);
-								} catch (e) {
-									throw new NodeOperationError(
-										this.getNode(),
-										`Invalid JSON in "Images JSON" field: ${(e as Error).message}`,
-										{ itemIndex: i },
-									);
-								}
-							} else {
-								// Already parsed (expression returned an object/array)
-								parsed = imagesJsonRaw;
-							}
-
-							if (!Array.isArray(parsed)) {
-								throw new NodeOperationError(
-									this.getNode(),
-									'Images JSON must be an array of image objects, e.g. [{"url":"...","productType":0,"viewType":0}]',
-									{ itemIndex: i },
-								);
-							}
-
-							imagesList = (parsed as Array<Record<string, unknown>>).map((img, idx) => {
-								if (!img.url || typeof img.url !== 'string') {
-									throw new NodeOperationError(
-										this.getNode(),
-										`Image at index ${idx} is missing a valid "url" property`,
-										{ itemIndex: i },
-									);
-								}
-								return {
-									url: img.url as string,
-									productType: typeof img.productType === 'number' ? img.productType : 0,
-									viewType: typeof img.viewType === 'number' ? img.viewType : 0,
-								};
-							});
-						} else if (imageInputMode === 'urlList') {
-							// URL List mode: comma-separated string or array of URLs
-							const imageUrlsRaw = this.getNodeParameter('imageUrls', i) as string | string[];
-							const defaultProductType = this.getNodeParameter('defaultProductType', i, 0) as number;
-							const defaultViewType = this.getNodeParameter('defaultViewType', i, 0) as number;
-
-							let urls: string[];
-							if (Array.isArray(imageUrlsRaw)) {
-								urls = imageUrlsRaw.map((u) => u.trim()).filter((u) => u.length > 0);
-							} else {
-								urls = imageUrlsRaw
-									.split(',')
-									.map((u) => u.trim())
-									.filter((u) => u.length > 0);
-							}
-
-							imagesList = urls.map((url) => ({
-								url,
-								productType: defaultProductType,
-								viewType: defaultViewType,
-							}));
+						// Front Image URL (required)
+						const frontImageUrl = (this.getNodeParameter('frontImageUrl', i) as string).trim();
+						if (frontImageUrl) {
+							imagesList.push({ url: frontImageUrl, productType: 0, viewType: 0 });
 						}
 
-						const additionalOptions = this.getNodeParameter('additionalOptions', i, {}) as {
-							callbackSecret?: string;
-							state?: string;
+						// Back Image URL (optional)
+						const backImageUrl = (this.getNodeParameter('backImageUrl', i, '') as string).trim();
+						if (backImageUrl) {
+							imagesList.push({ url: backImageUrl, productType: 0, viewType: 1 });
+						}
+
+						// Styling Image URLs (optional, repeatable)
+						const stylingImages = this.getNodeParameter('stylingImageUrls', i, {}) as {
+							imageValues?: Array<{ url: string }>;
 						};
+						if (stylingImages.imageValues) {
+							for (const img of stylingImages.imageValues) {
+								const url = img.url.trim();
+								if (url) {
+									imagesList.push({ url, productType: 1 });
+								}
+							}
+						}
 
 						if (imagesList.length === 0) {
 							throw new NodeOperationError(
@@ -882,7 +538,7 @@ export class Dreem implements INodeType {
 
 						// Build request body
 						const callbackUrl = this.getNodeParameter('callbackUrl', i) as string;
-						const outputFormat = this.getNodeParameter('outputFormat', i) as number;
+						const outputFormat = this.getNodeParameter('outputFormat', i) as string;
 						const outputAspectRatio = this.getNodeParameter('outputAspectRatio', i) as number;
 
 						const body: Record<string, unknown> = {
@@ -893,13 +549,6 @@ export class Dreem implements INodeType {
 							outputFormat,
 							outputAspectRatio,
 						};
-
-						if (additionalOptions.callbackSecret) {
-							body.callbackSecret = additionalOptions.callbackSecret;
-						}
-						if (additionalOptions.state && additionalOptions.state !== '{}') {
-							body.state = JSON.parse(additionalOptions.state as string);
-						}
 
 						const response = await this.helpers.httpRequestWithAuthentication.call(
 							this,
@@ -918,31 +567,41 @@ export class Dreem implements INodeType {
 						});
 					} else if (operation === 'generateProductShots') {
 						const shotCodes = this.getNodeParameter('shotCodes', i) as string[];
-						const imageUrl = this.getNodeParameter('imageUrl', i) as string;
-						const outputFormat = this.getNodeParameter('outputFormat', i) as number;
+
+						// --- Build imagesList from front/back image fields ---
+						const imagesList: Array<{ url: string; productType: number; viewType?: number }> = [];
+
+						// Front Image URL (required)
+						const frontImageUrl = (this.getNodeParameter('frontImageUrl', i) as string).trim();
+						if (frontImageUrl) {
+							imagesList.push({ url: frontImageUrl, productType: 0, viewType: 0 });
+						}
+
+						// Back Image URL (optional)
+						const backImageUrl = (this.getNodeParameter('backImageUrl', i, '') as string).trim();
+						if (backImageUrl) {
+							imagesList.push({ url: backImageUrl, productType: 0, viewType: 1 });
+						}
+
+						if (imagesList.length === 0) {
+							throw new NodeOperationError(
+								this.getNode(),
+								'At least one product image is required',
+								{ itemIndex: i },
+							);
+						}
+
+						const outputFormat = this.getNodeParameter('outputFormat', i) as string;
 						const outputAspectRatio = this.getNodeParameter('outputAspectRatio', i) as number;
-						const additionalOptions = this.getNodeParameter('additionalOptions', i, {}) as {
-							callbackUrl?: string;
-							callbackSecret?: string;
-							state?: string;
-						};
+						const callbackUrl = this.getNodeParameter('callbackUrl', i) as string;
 
 						const body: Record<string, unknown> = {
 							shotCodes,
-							imageUrl,
+							images: imagesList,
+							callbackUrl,
 							outputFormat,
 							outputAspectRatio,
 						};
-
-						if (additionalOptions.callbackUrl) {
-							body.callbackUrl = additionalOptions.callbackUrl;
-						}
-						if (additionalOptions.callbackSecret) {
-							body.callbackSecret = additionalOptions.callbackSecret;
-						}
-						if (additionalOptions.state && additionalOptions.state !== '{}') {
-							body.state = JSON.parse(additionalOptions.state as string);
-						}
 
 						const response = await this.helpers.httpRequestWithAuthentication.call(
 							this,

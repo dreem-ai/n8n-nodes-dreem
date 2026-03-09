@@ -1,8 +1,8 @@
 # @dreem/n8n-nodes-dreem
 
-This is an n8n community node. It lets you use _app/service name_ in your n8n workflows.
+This is an n8n community node. It lets you use Dreem in your n8n workflows.
 
-_App/service name_ is _one or two sentences describing the service this node integrates with_.
+[Dreem](https://dreem.ai) is an AI-powered image generation platform for e-commerce, enabling you to create professional model shots and product shots from simple product images.
 
 [n8n](https://n8n.io/) is a [fair-code licensed](https://docs.n8n.io/sustainable-use-license/) workflow automation platform.
 
@@ -20,27 +20,46 @@ Follow the [installation guide](https://docs.n8n.io/integrations/community-nodes
 
 ## Operations
 
-_List the operations supported by your node._
+### Generative Content
+
+- **Generate Model Shots** — Try your product on different AI models and shots. Requires a talent (AI model), shot selection, and at least one product image. Supports optional back and styling images.
+- **Generate Product Shots** — Generate clean, studio-style product shots. Requires shot selection and at least one product image.
+
+Both generation operations support configurable output format (PNG/JPEG), aspect ratio, and an optional webhook callback URL.
+
+### Library
+
+- **Get Available Talents** — List all available AI models.
+- **Get Available Shots** — List all available shots.
+
+### Task
+
+- **Get Status** — Check the status of a generation task by its request ID.
 
 ## Credentials
 
-_If users need to authenticate with the app/service, provide details here. You should include prerequisites (such as signing up with the service), available authentication methods, and how to set them up._
+This node supports two authentication methods:
+
+- **OAuth2** — Connect via OAuth2 (PKCE). Pre-configured for standard n8n usage with selectable permission scopes (Full Access, Generation Only, Read Only, or Custom).
+- **API Key** — Authenticate with an API key issued by Dreem. Generate one from your Dreem dashboard under **Settings → API Management**. The key starts with `dreem_pk_`.
 
 ## Compatibility
 
-_State the minimum n8n version, as well as which versions you test against. You can also include any known version incompatibility issues._
+Tested with n8n v1.x. Requires n8n Nodes API version 1.
 
 ## Usage
 
-_This is an optional section. Use it to help users with any difficult or confusing aspects of the node._
-
-_By the time users are looking for community nodes, they probably already know n8n basics. But if you expect new users, you can link to the [Try it out](https://docs.n8n.io/try-it-out/) documentation to help them get started._
+1. Add the **Dreem** node to your workflow.
+2. Select an authentication method and configure your credentials.
+3. Choose a resource (**Generative Content**, **Library**, or **Task**) and an operation.
+4. For generation operations, provide product image URLs and select your desired shots.
+5. Generation is asynchronous — use the **Task → Get Status** operation with the returned request ID to poll for results, or provide a webhook URL to receive results automatically.
 
 ## Resources
 
 * [n8n community nodes documentation](https://docs.n8n.io/integrations/#community-nodes)
-* _Link to app/service documentation._
+* [Dreem documentation](https://docs.dreem.ai)
 
 ## Version history
 
-_This is another optional section. If your node has multiple versions, include a short description of available versions and what changed, as well as any compatibility impact._
+- **0.1.0** — Initial release with model shot generation, product shot generation, library browsing, and task status tracking.
