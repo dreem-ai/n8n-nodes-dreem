@@ -115,6 +115,12 @@ export class Dreem implements INodeType {
 						description: 'Generate clean, studio-style product shots',
 						action: 'Generate product shots',
 					},
+					{
+						name: 'Generate Video',
+						value: 'generateVideo',
+						description: 'Generate video from product image',
+						action: 'Generate video from image',
+					},
 				],
 				default: 'generateModelShots',
 			},
@@ -279,13 +285,9 @@ export class Dreem implements INodeType {
 				description: 'Aspect ratio for the generated image',
 			},
 
-
-
 			// --------------------------------------------------------
 			// Content > Generate Product Shots — Fields
 			// --------------------------------------------------------
-
-
 
 			// Callback URL (shared for Model Shots & Product Shots)
 			{
@@ -301,6 +303,134 @@ export class Dreem implements INodeType {
 				},
 				default: '',
 				description: 'URL to receive generation results (webhook callback). Required by the API.',
+				placeholder: 'https://webhook.site/your-unique-url',
+			},
+			// --------------------------------------------------------
+			// Content > Generate Video — Fields
+			// --------------------------------------------------------
+
+			// First Frame URL (required)
+			{
+				displayName: 'First Frame URL',
+				name: 'firstFrameUrl',
+				type: 'string',
+				required: true,
+				displayOptions: {
+					show: {
+						resource: ['content'],
+						operation: ['generateVideo'],
+					},
+				},
+				default: '',
+				description: 'URL of the first frame image (start frame)',
+				placeholder: 'https://example.com/first-frame.jpg',
+			},
+
+			// Last Frame URL (optional)
+			{
+				displayName: 'Last Frame URL',
+				name: 'lastFrameUrl',
+				type: 'string',
+				required: false,
+				displayOptions: {
+					show: {
+						resource: ['content'],
+						operation: ['generateVideo'],
+					},
+				},
+				default: '',
+				description: 'URL of the last frame image (end frame, optional)',
+				placeholder: 'https://example.com/last-frame.jpg',
+			},
+
+			// Video Duration
+			{
+				displayName: 'Duration',
+				name: 'duration',
+				type: 'options',
+				required: true,
+				displayOptions: {
+					show: {
+						resource: ['content'],
+						operation: ['generateVideo'],
+					},
+				},
+				options: [
+					{ name: '5 Seconds', value: '5s' },
+					{ name: '10 Seconds', value: '10s' },
+				],
+				default: '10s',
+				description: 'Duration of the output video',
+			},
+
+			// Video Output Aspect Ratio
+			{
+				displayName: 'Output Aspect Ratio',
+				name: 'videoOutputAspectRatio',
+				type: 'options',
+				required: true,
+				displayOptions: {
+					show: {
+						resource: ['content'],
+						operation: ['generateVideo'],
+					},
+				},
+				options: [
+					{ name: '1:1 (Square)', value: 0 },
+					{ name: '3:4', value: 6 },
+					{ name: '9:16 (Portrait)', value: 7 },
+				],
+				default: 7,
+				description: 'Aspect ratio for the generated video. Only 1:1, 3:4, and 9:16 are supported.',
+			},
+			// Video Prompt ID (dropdown)
+			{
+				displayName: 'Prompt (Library)',
+				name: 'promptId',
+				type: 'options',
+				typeOptions: {
+					loadOptionsMethod: 'getVideoPrompts',
+				},
+				displayOptions: {
+					show: {
+						resource: ['content'],
+						operation: ['generateVideo'],
+					},
+				},
+				default: '',
+				description: 'Select a video generation prompt from the library (optional)',
+			},
+
+			// Video Prompt (text input)
+			{
+				displayName: 'Prompt (Custom Text)',
+				name: 'videoPrompt',
+				type: 'string',
+				displayOptions: {
+					show: {
+						resource: ['content'],
+						operation: ['generateVideo'],
+					},
+				},
+				default: '',
+				description: 'Or enter a custom text prompt to guide video generation (optional)',
+				placeholder: 'e.g., Model walking gracefully',
+			},
+
+			// Video Callback URL
+			{
+				displayName: 'Webhook URL',
+				name: 'videoCallbackUrl',
+				type: 'string',
+				required: false,
+				displayOptions: {
+					show: {
+						resource: ['content'],
+						operation: ['generateVideo'],
+					},
+				},
+				default: '',
+				description: 'URL to receive generation results (webhook callback)',
 				placeholder: 'https://webhook.site/your-unique-url',
 			},
 
@@ -330,8 +460,247 @@ export class Dreem implements INodeType {
 						description: 'List all available shots',
 						action: 'Get available shots',
 					},
+					{
+						name: 'Get Video Prompts',
+						value: 'getVideoPrompts',
+						description: 'List available video generation prompts',
+						action: 'Get video prompts',
+					},
 				],
 				default: 'getAvailableTalents',
+			},
+
+			// --------------------------------------------------------
+			// Library > Get Available Talents — Fields
+			// --------------------------------------------------------
+
+			// Gender Filter for Talents
+			{
+				displayName: 'Gender',
+				name: 'talentGender',
+				type: 'options',
+				displayOptions: {
+					show: {
+						resource: ['library'],
+						operation: ['getAvailableTalents'],
+					},
+				},
+				options: [
+					{ name: 'All', value: 0 },
+					{ name: 'Male', value: 1 },
+					{ name: 'Female', value: 2 },
+					{ name: 'Unisex', value: 3 },
+				],
+				default: 0,
+				description: 'Filter talents by gender',
+			},
+
+			// Search Keyword for Talents
+			{
+				displayName: 'Search Keyword',
+				name: 'talentKeyword',
+				type: 'string',
+				displayOptions: {
+					show: {
+						resource: ['library'],
+						operation: ['getAvailableTalents'],
+					},
+				},
+				default: '',
+				description: 'Search talents by keyword (optional)',
+				placeholder: 'e.g., model name',
+			},
+
+			// Page Number for Talents
+			{
+				displayName: 'Page Number',
+				name: 'talentPageNumber',
+				type: 'number',
+				displayOptions: {
+					show: {
+						resource: ['library'],
+						operation: ['getAvailableTalents'],
+					},
+				},
+				default: 1,
+				description: 'Page number for pagination',
+				typeOptions: {
+					minValue: 1,
+				},
+			},
+
+			// Page Size for Talents
+			{
+				displayName: 'Page Size',
+				name: 'talentPageSize',
+				type: 'number',
+				displayOptions: {
+					show: {
+						resource: ['library'],
+						operation: ['getAvailableTalents'],
+					},
+				},
+				default: 10,
+				description: 'Number of talents per page',
+				typeOptions: {
+					minValue: 1,
+					maxValue: 100,
+				},
+			},
+
+			// --------------------------------------------------------
+			// Library > Get Available Shots — Fields
+			// --------------------------------------------------------
+			// Shot Type Filter
+			{
+				displayName: 'Shot Type',
+				name: 'shotType',
+				type: 'options',
+				displayOptions: {
+					show: {
+						resource: ['library'],
+						operation: ['getAvailableShots'],
+					},
+				},
+				options: [
+					{ name: 'All', value: -1 },
+					{ name: 'Pack Shot (Product)', value: 0 },
+					{ name: 'Virtual Model', value: 1 },
+					{ name: 'Video', value: 5 },
+				],
+				default: -1,
+				description: 'Filter shots by type',
+			},
+
+			// Search Keyword for Shots
+			{
+				displayName: 'Search Keyword',
+				name: 'shotKeyword',
+				type: 'string',
+				displayOptions: {
+					show: {
+						resource: ['library'],
+						operation: ['getAvailableShots'],
+					},
+				},
+				default: '',
+				description: 'Search shots by keyword (optional)',
+				placeholder: 'e.g., front, side',
+			},
+
+			// Page Number for Shots
+			{
+				displayName: 'Page Number',
+				name: 'shotPageNumber',
+				type: 'number',
+				displayOptions: {
+					show: {
+						resource: ['library'],
+						operation: ['getAvailableShots'],
+					},
+				},
+				default: 1,
+				description: 'Page number for pagination',
+				typeOptions: {
+					minValue: 1,
+				},
+			},
+
+			// Page Size for Shots
+			{
+				displayName: 'Page Size',
+				name: 'shotPageSize',
+				type: 'number',
+				displayOptions: {
+					show: {
+						resource: ['library'],
+						operation: ['getAvailableShots'],
+					},
+				},
+				default: 20,
+				description: 'Number of shots per page',
+				typeOptions: {
+					minValue: 1,
+					maxValue: 100,
+				},
+			},
+
+			// --------------------------------------------------------
+			// Library > Get Video Prompts — Fields
+			// --------------------------------------------------------
+
+			// Gender Filter
+			{
+				displayName: 'Gender',
+				name: 'gender',
+				type: 'options',
+				displayOptions: {
+					show: {
+						resource: ['library'],
+						operation: ['getVideoPrompts'],
+					},
+				},
+				options: [
+					{ name: 'All', value: 0 },
+					{ name: 'Male', value: 1 },
+					{ name: 'Female', value: 2 },
+					{ name: 'Unisex', value: 3 },
+				],
+				default: 0,
+				description: 'Filter prompts by gender',
+			},
+
+			// Search Keyword
+			{
+				displayName: 'Search Keyword',
+				name: 'keyword',
+				type: 'string',
+				displayOptions: {
+					show: {
+						resource: ['library'],
+						operation: ['getVideoPrompts'],
+					},
+				},
+				default: '',
+				description: 'Search prompts by keyword (optional)',
+				placeholder: 'e.g., walking, dancing',
+			},
+
+			// Page Number
+			{
+				displayName: 'Page Number',
+				name: 'pageNum',
+				type: 'number',
+				displayOptions: {
+					show: {
+						resource: ['library'],
+						operation: ['getVideoPrompts'],
+					},
+				},
+				default: 1,
+				description: 'Page number for pagination',
+				typeOptions: {
+					minValue: 1,
+				},
+			},
+
+			// Page Size
+			{
+				displayName: 'Page Size',
+				name: 'pageSize',
+				type: 'number',
+				displayOptions: {
+					show: {
+						resource: ['library'],
+						operation: ['getVideoPrompts'],
+					},
+				},
+				default: 20,
+				description: 'Number of prompts per page',
+				typeOptions: {
+					minValue: 1,
+					maxValue: 100,
+				},
 			},
 
 			// ========================================================
@@ -467,6 +836,61 @@ export class Dreem implements INodeType {
 							name: shot.name || shot.shotName,
 							value: shot.code || shot.shotCode,
 							description: shot.code || shot.shotCode || '',
+						});
+					}
+
+					return returnData;
+				} catch (error) {
+					throw new NodeApiError(this.getNode(), error as JsonObject);
+				}
+			}, // Load video prompts for dropdown
+			async getVideoPrompts(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+				const credentialType =
+					(this.getNodeParameter('authentication', 0) as string) === 'apiKey'
+						? 'dreemApi'
+						: 'dreemOAuth2Api';
+				const returnData: INodePropertyOptions[] = [];
+				try {
+					const baseURL = getBaseUrl();
+					const requestBody: Record<string, any> = {
+						keyword: '',
+						pageNum: 1,
+						pageSize: 100,
+					};
+					// Don't include gender parameter to get all genders
+
+					// Get video prompts from API
+					const apiResponse = (await this.helpers.httpRequestWithAuthentication.call(
+						this,
+						credentialType,
+						{
+							method: 'POST',
+							baseURL,
+							url: '/studio/video-prompts/list',
+							body: requestBody,
+						},
+					)) as any;
+
+					// Handle response structure
+					let prompts: any[] = [];
+
+					if (Array.isArray(apiResponse)) {
+						prompts = apiResponse;
+					} else if (apiResponse?.data) {
+						if (Array.isArray(apiResponse.data)) {
+							prompts = apiResponse.data;
+						} else if (apiResponse.data.pageData && Array.isArray(apiResponse.data.pageData)) {
+							prompts = apiResponse.data.pageData;
+						}
+					}
+
+					// Filter only SYSTEM sourceType prompts
+					const systemPrompts = prompts.filter((prompt: any) => prompt.sourceType === 'SYSTEM');
+					for (const prompt of systemPrompts) {
+						returnData.push({
+							name: prompt.name || prompt.title || prompt.prompt || 'Unknown',
+							value: prompt.id || prompt.promptId,
+							description: prompt.description || '',
 						});
 					}
 
@@ -618,6 +1042,69 @@ export class Dreem implements INodeType {
 							json: response as JsonObject,
 							pairedItem: { item: i },
 						});
+					} else if (operation === 'generateVideo') {
+						const firstFrameUrl = (this.getNodeParameter('firstFrameUrl', i) as string).trim();
+
+						if (!firstFrameUrl) {
+							throw new NodeOperationError(this.getNode(), 'First Frame URL is required', {
+								itemIndex: i,
+							});
+						}
+
+						const lastFrameUrl = (this.getNodeParameter('lastFrameUrl', i, '') as string).trim();
+						const duration = this.getNodeParameter('duration', i) as string;
+						const outputAspectRatio = this.getNodeParameter('videoOutputAspectRatio', i) as number;
+						const promptId = this.getNodeParameter('promptId', i, '') as string;
+						const videoPrompt = this.getNodeParameter('videoPrompt', i, '') as string;
+						const callbackUrl = this.getNodeParameter('videoCallbackUrl', i, '') as string;
+
+						// Build images array with first frame (required) and last frame (optional)
+						const images: Array<{ url: string; frameType: number }> = [
+							{
+								url: firstFrameUrl,
+								frameType: 0, // Start frame
+							},
+						];
+
+						// Add last frame if provided
+						if (lastFrameUrl) {
+							images.push({
+								url: lastFrameUrl,
+								frameType: 1, // End frame
+							});
+						}
+
+						const body: Record<string, unknown> = {
+							images,
+							duration,
+							outputAspectRatio,
+						};
+
+						// Add optional fields - prioritize promptId over videoPrompt
+						if (promptId) {
+							body.promptId = promptId;
+						} else if (videoPrompt) {
+							body.prompt = videoPrompt;
+						}
+						if (callbackUrl) {
+							body.callbackUrl = callbackUrl;
+						}
+
+						const response = await this.helpers.httpRequestWithAuthentication.call(
+							this,
+							credentialType,
+							{
+								method: 'POST',
+								baseURL,
+								url: '/ai-tool/generation/image-to-video',
+								body,
+							},
+						);
+
+						returnData.push({
+							json: response as JsonObject,
+							pairedItem: { item: i },
+						});
 					}
 				}
 
@@ -626,6 +1113,25 @@ export class Dreem implements INodeType {
 				// ==============================================
 				else if (resource === 'library') {
 					if (operation === 'getAvailableTalents') {
+						const talentGender = this.getNodeParameter('talentGender', i) as number;
+						const talentKeyword = this.getNodeParameter('talentKeyword', i, '') as string;
+						const talentPageNumber = this.getNodeParameter('talentPageNumber', i) as number;
+						const talentPageSize = this.getNodeParameter('talentPageSize', i) as number;
+
+						// Build query parameters
+						const queryParams: Record<string, any> = {
+							pageNumber: talentPageNumber,
+							pageSize: talentPageSize,
+						};
+
+						// Only include gender if not "All" (0)
+						if (talentGender !== 0) {
+							queryParams.gender = talentGender;
+						} // Only include keyword if provided
+						if (talentKeyword) {
+							queryParams.keyword = talentKeyword;
+						}
+
 						const apiResponse = (await this.helpers.httpRequestWithAuthentication.call(
 							this,
 							credentialType,
@@ -633,6 +1139,7 @@ export class Dreem implements INodeType {
 								method: 'GET',
 								baseURL,
 								url: '/studio/resources/talent-options',
+								qs: queryParams,
 							},
 						)) as any;
 
@@ -658,13 +1165,33 @@ export class Dreem implements INodeType {
 							});
 						}
 					} else if (operation === 'getAvailableShots') {
+						const shotType = this.getNodeParameter('shotType', i) as number;
+						const shotKeyword = this.getNodeParameter('shotKeyword', i, '') as string;
+						const shotPageNumber = this.getNodeParameter('shotPageNumber', i) as number;
+						const shotPageSize = this.getNodeParameter('shotPageSize', i) as number;
+
+						// Build query parameters
+						const queryParams: Record<string, any> = {
+							pageNumber: shotPageNumber,
+							pageSize: shotPageSize,
+						};
+
+						// Only include shotType if not "All" (-1)
+						if (shotType !== -1) {
+							queryParams.shotType = shotType;
+						} // Only include keyword if provided
+						if (shotKeyword) {
+							queryParams.keyword = shotKeyword;
+						}
+
 						const apiResponse = (await this.helpers.httpRequestWithAuthentication.call(
 							this,
 							credentialType,
 							{
 								method: 'GET',
 								baseURL,
-								url: '/studio/resources/shots',
+								url: '/styleguide/resources/shots',
+								qs: queryParams,
 							},
 						)) as any;
 
@@ -688,6 +1215,50 @@ export class Dreem implements INodeType {
 								json: shot,
 								pairedItem: { item: i },
 							});
+						}
+					} else if (operation === 'getVideoPrompts') {
+						const gender = this.getNodeParameter('gender', i) as number;
+						const keyword = this.getNodeParameter('keyword', i, '') as string;
+						const pageNum = this.getNodeParameter('pageNum', i) as number;
+						const pageSize = this.getNodeParameter('pageSize', i) as number;
+
+						const requestBody: Record<string, any> = {
+							keyword,
+							pageNum,
+							pageSize,
+						}; // Only include gender if not "All" (0)
+						if (gender !== 0) {
+							requestBody.gender = gender;
+						}
+
+						const apiResponse = (await this.helpers.httpRequestWithAuthentication.call(
+							this,
+							credentialType,
+							{
+								method: 'POST',
+								baseURL,
+								url: '/studio/video-prompts/list',
+								body: requestBody,
+							},
+						)) as any;
+
+						// Handle different response structures
+						let prompts: any[] = [];
+						if (Array.isArray(apiResponse)) {
+							prompts = apiResponse;
+						} else if (apiResponse?.data) {
+							if (Array.isArray(apiResponse.data)) {
+								prompts = apiResponse.data;
+							} else if (apiResponse.data.pageData && Array.isArray(apiResponse.data.pageData)) {
+								prompts = apiResponse.data.pageData;
+							} else if (typeof apiResponse.data === 'object') {
+								prompts = [apiResponse.data];
+							}
+						} // Filter only SYSTEM sourceType prompts
+						const systemPrompts = prompts.filter((prompt: any) => prompt.sourceType === 'SYSTEM');
+
+						for (const prompt of systemPrompts) {
+							returnData.push({ json: prompt, pairedItem: { item: i } });
 						}
 					}
 				}
