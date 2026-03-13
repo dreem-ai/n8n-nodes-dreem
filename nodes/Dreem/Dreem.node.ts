@@ -468,13 +468,9 @@ export class Dreem implements INodeType {
 					},
 				],
 				default: 'getAvailableTalents',
-			},
-
-			// --------------------------------------------------------
+			},			// --------------------------------------------------------
 			// Library > Get Available Talents — Fields
-			// --------------------------------------------------------
-
-			// Gender Filter for Talents
+			// --------------------------------------------------------			// Gender Filter for Talents
 			{
 				displayName: 'Gender',
 				name: 'talentGender',
@@ -492,7 +488,9 @@ export class Dreem implements INodeType {
 					{ name: 'Unisex', value: 3 },
 				],
 				default: 0,
-				description: 'Filter talents by gender',
+				placeholder: '0 (All), 1 (Male), 2 (Female), 3 (Unisex)',
+				hint: 'Use values: 0=All, 1=Male, 2=Female, 3=Unisex',
+				description: 'Filter talents by gender. All=0, Male=1, Female=2, Unisex=3',
 			},
 
 			// Search Keyword for Talents
@@ -627,9 +625,7 @@ export class Dreem implements INodeType {
 
 			// --------------------------------------------------------
 			// Library > Get Video Prompts — Fields
-			// --------------------------------------------------------
-
-			// Gender Filter
+			// --------------------------------------------------------			// Gender Filter
 			{
 				displayName: 'Gender',
 				name: 'gender',
@@ -641,12 +637,14 @@ export class Dreem implements INodeType {
 					},
 				},
 				options: [
-					{ name: 'All', value: 0 },
-					{ name: 'Male', value: 1 },
-					{ name: 'Female', value: 2 },
-					{ name: 'Unisex', value: 3 },
+					{ name: 'All', value: 0, description: 'Value: 0' },
+					{ name: 'Male', value: 1, description: 'Value: 1' },
+					{ name: 'Female', value: 2, description: 'Value: 2' },
+					{ name: 'Unisex', value: 3, description: 'Value: 3' },
 				],
 				default: 0,
+				placeholder: '0 (All), 1 (Male), 2 (Female), 3 (Unisex)',
+				hint: 'Use values: 0=All, 1=Male, 2=Female, 3=Unisex',
 				description: 'Filter prompts by gender',
 			},
 
@@ -747,8 +745,7 @@ export class Dreem implements INodeType {
 	};
 
 	methods = {
-		loadOptions: {
-			// Load talents for dropdown
+		loadOptions: {			// Load talents for dropdown with pagination to get all talents
 			async getTalents(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
 				const credentialType =
 					(this.getNodeParameter('authentication', 0) as string) === 'apiKey'
@@ -757,30 +754,52 @@ export class Dreem implements INodeType {
 				const returnData: INodePropertyOptions[] = [];
 				try {
 					const baseURL = getBaseUrl();
+					let pageNumber = 1;
+					const pageSize = 100; // Maximum page size
+					let hasMoreData = true;
+					let allTalents: any[] = [];
 
-					const apiResponse = (await this.helpers.httpRequestWithAuthentication.call(
-						this,
-						credentialType,
-						{
-							method: 'GET',
-							baseURL,
-							url: '/studio/resources/talent-options',
-						},
-					)) as any;
+					// Loop through all pages to get all talents
+					while (hasMoreData) {
+						const apiResponse = (await this.helpers.httpRequestWithAuthentication.call(
+							this,
+							credentialType,
+							{
+								method: 'GET',
+								baseURL,
+								url: '/studio/resources/talent-options',
+								qs: {
+									pageNumber,
+									pageSize,
+								},
+							},
+						)) as any;
 
-					let talents: any[] = [];
+						let talents: any[] = [];
 
-					if (Array.isArray(apiResponse)) {
-						talents = apiResponse;
-					} else if (apiResponse?.data) {
-						if (Array.isArray(apiResponse.data)) {
-							talents = apiResponse.data;
-						} else if (apiResponse.data.pageData && Array.isArray(apiResponse.data.pageData)) {
-							talents = apiResponse.data.pageData;
+						if (Array.isArray(apiResponse)) {
+							talents = apiResponse;
+						} else if (apiResponse?.data) {
+							if (Array.isArray(apiResponse.data)) {
+								talents = apiResponse.data;
+							} else if (apiResponse.data.pageData && Array.isArray(apiResponse.data.pageData)) {
+								talents = apiResponse.data.pageData;
+							}
+						}
+
+						// Add talents from current page
+						allTalents = allTalents.concat(talents);
+
+						// Check if there are more pages
+						if (talents.length < pageSize) {
+							hasMoreData = false;
+						} else {
+							pageNumber++;
 						}
 					}
 
-					for (const talent of talents) {
+					// Convert all talents to options
+					for (const talent of allTalents) {
 						returnData.push({
 							name: talent.label || talent.name || 'Unknown',
 							value: talent.value || talent.talentId || talent.id,
