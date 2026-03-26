@@ -57,6 +57,56 @@ Tested with n8n v1.x. Requires n8n Nodes API version 1.
 4. For generation operations, provide product image URLs and select your desired shots.
 5. Generation is asynchronous — use the **Task → Get Status** operation with the returned request ID to poll for results, or provide a webhook URL to receive results automatically.
 
+## Environment & Build Configuration
+
+API endpoints are **baked into the compiled output at build time** — there are no runtime environment variables. The flow works as follows:
+
+### 1. Environment Files
+
+Create a `.env` file and optionally an environment-specific override:
+
+| File | Purpose |
+| --- | --- |
+| `.env.example` | Template — copy this to get started |
+| `.env` | Base values, always loaded |
+| `.env.dev` / `.env.dev.local` | Overrides for development builds |
+| `.env.prod` / `.env.prod.local` | Overrides for production builds |
+
+Available variables:
+
+```env
+DREEM_API_BASE_URL=https://gateway.dreem.ai
+DREEM_ACCOUNTS_API_BASE_URL=https://accounts.dreem.ai
+```
+
+### 2. Config Generation
+
+Before compilation, `scripts/generate-config.js` reads the env vars and writes `nodes/Dreem/config.ts`:
+
+```ts
+export const API_BASE_URL = 'https://gateway.dreem.ai';
+export const ACCOUNTS_BASE_URL = 'https://accounts.dreem.ai';
+```
+
+This file is then compiled into the bundle. If env vars are absent, production URLs are used as fallback.
+
+### 3. Build Commands
+
+```bash
+npm run build           # Uses .env only (production URLs)
+npm run build:dev       # Merges .env + .env.dev + .env.dev.local
+npm run build:prod      # Merges .env + .env.prod + .env.prod.local
+```
+
+### 4. Docker
+
+The Dockerfile copies the pre-built `dist/` to `/opt/custom-nodes` and sets `N8N_CUSTOM_EXTENSIONS=/opt/custom-nodes`. Build with the correct env vars **before** building the Docker image:
+
+```bash
+npm run build:prod
+docker build -t n8n-nodes-dreem .
+```
+
 ## Resources
 
 * [n8n community nodes documentation](https://docs.n8n.io/integrations/#community-nodes)
