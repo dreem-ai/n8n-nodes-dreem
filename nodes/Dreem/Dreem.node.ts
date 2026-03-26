@@ -8,11 +8,7 @@ import type {
 	JsonObject,
 } from 'n8n-workflow';
 import { NodeApiError, NodeOperationError } from 'n8n-workflow';
-
-// Helper function to get base URL from environment variable
-function getBaseUrl(): string {
-	return process.env.DREEM_API_BASE_URL || 'https://gateway.dreem.ai';
-}
+import { API_BASE_URL } from './config';
 
 export class Dreem implements INodeType {
 	description: INodeTypeDescription = {
@@ -294,7 +290,6 @@ export class Dreem implements INodeType {
 				displayName: 'Webhook URL',
 				name: 'callbackUrl',
 				type: 'string',
-				required: false,
 				displayOptions: {
 					show: {
 						resource: ['content'],
@@ -331,7 +326,6 @@ export class Dreem implements INodeType {
 				displayName: 'Last Frame URL',
 				name: 'lastFrameUrl',
 				type: 'string',
-				required: false,
 				displayOptions: {
 					show: {
 						resource: ['content'],
@@ -422,7 +416,6 @@ export class Dreem implements INodeType {
 				displayName: 'Webhook URL',
 				name: 'videoCallbackUrl',
 				type: 'string',
-				required: false,
 				displayOptions: {
 					show: {
 						resource: ['content'],
@@ -468,7 +461,7 @@ export class Dreem implements INodeType {
 					},
 				],
 				default: 'getAvailableTalents',
-			},			// --------------------------------------------------------
+			}, // --------------------------------------------------------
 			// Library > Get Available Talents — Fields
 			// --------------------------------------------------------			// Gender Filter for Talents
 			{
@@ -490,7 +483,7 @@ export class Dreem implements INodeType {
 				default: 0,
 				placeholder: '0 (All), 1 (Male), 2 (Female), 3 (Unisex)',
 				hint: 'Use values: 0=All, 1=Male, 2=Female, 3=Unisex',
-				description: 'Filter talents by gender. All=0, Male=1, Female=2, Unisex=3',
+				description: 'Filter talents by gender. All=0, Male=1, Female=2, Unisex=3.',
 			},
 
 			// Search Keyword for Talents
@@ -742,10 +735,12 @@ export class Dreem implements INodeType {
 				placeholder: 'e.g. 550e8400-e29b-41d4-a716-446655440000',
 			},
 		],
+		usableAsTool: true,
 	};
 
 	methods = {
-		loadOptions: {			// Load talents for dropdown with pagination to get all talents
+		loadOptions: {
+			// Load talents for dropdown with pagination to get all talents
 			async getTalents(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
 				const credentialType =
 					(this.getNodeParameter('authentication', 0) as string) === 'apiKey'
@@ -753,7 +748,7 @@ export class Dreem implements INodeType {
 						: 'dreemOAuth2Api';
 				const returnData: INodePropertyOptions[] = [];
 				try {
-					const baseURL = getBaseUrl();
+					const baseURL = API_BASE_URL;
 					let pageNumber = 1;
 					const pageSize = 100; // Maximum page size
 					let hasMoreData = true;
@@ -820,7 +815,7 @@ export class Dreem implements INodeType {
 						: 'dreemOAuth2Api';
 				const returnData: INodePropertyOptions[] = [];
 				try {
-					const baseURL = getBaseUrl();
+					const baseURL = API_BASE_URL;
 
 					// Filter shots by shotType: generateModelShots = 1, generateProductShots = 0
 					const operation = this.getNodeParameter('operation', 0) as string;
@@ -870,7 +865,7 @@ export class Dreem implements INodeType {
 						: 'dreemOAuth2Api';
 				const returnData: INodePropertyOptions[] = [];
 				try {
-					const baseURL = getBaseUrl();
+					const baseURL = API_BASE_URL;
 					const requestBody: Record<string, any> = {
 						keyword: '',
 						pageNum: 1,
@@ -931,7 +926,7 @@ export class Dreem implements INodeType {
 		const credentialType = authentication === 'apiKey' ? 'dreemApi' : 'dreemOAuth2Api';
 
 		// Get base URL from environment variable
-		const baseURL = getBaseUrl();
+		const baseURL = API_BASE_URL;
 
 		for (let i = 0; i < items.length; i++) {
 			try {

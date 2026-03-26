@@ -1,52 +1,56 @@
 {
-    "name": "@dreem/n8n-nodes-dreem",
-    "version": "0.1.0",
-    "description": "",
-    "license": "MIT",
-    "homepage": "",
-    "keywords": [
-        "n8n-community-node-package"
-    ],
-    "author": {
-        "name": "Hoang Thai Hoc",
-        "email": "hoc@creativeforce.io"
-    },
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/dreem/n8n-nodes-dreem.git"
-    },
-    "scripts": {
-        "build": "dotenv -- n8n-node build",
-        "build:watch": "dotenv -- tsc --watch",
-        "dev": "dotenv -- n8n-node dev",
-        "lint": "n8n-node lint",
-        "lint:fix": "n8n-node lint --fix",
-        "release": "n8n-node release",
-        "prepublishOnly": "n8n-node prerelease"
-    },
-    "files": [
-        "dist"
-    ],
-    "n8n": {
-        "n8nNodesApiVersion": 1,
-        "strict": true,
-        "credentials": [
-            "dist/credentials/DreemApi.credentials.js",
-            "dist/credentials/DreemOAuth2Api.credentials.js"
-        ],
-        "nodes": [
-            "dist/nodes/Dreem/Dreem.node.js"
-        ]
-    },
-    "devDependencies": {
-        "@n8n/node-cli": "*",
-        "dotenv-cli": "^11.0.0",
-        "eslint": "9.32.0",
-        "prettier": "3.6.2",
-        "release-it": "^19.0.4",
-        "typescript": "5.9.2"
-    },
-    "peerDependencies": {
-        "n8n-workflow": "*"
-    }
+	"name": "@dreem/n8n-nodes-dreem",
+	"version": "0.1.0",
+	"description": "Dreem nodes for n8n",
+	"license": "MIT",
+	"homepage": "",
+	"keywords": [
+		"n8n-community-node-package"
+	],
+	"author": {
+		"name": "Hoang Thai Hoc",
+		"email": "hoc@creativeforce.io"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/dreem/n8n-nodes-dreem.git"
+	},
+	"scripts": {
+		"prebuild": "dotenv -o -e .env -e .env.dev -e .env.dev.local -- node scripts/generate-config.js",
+		"build": "n8n-node build",
+		"build:dev": "dotenv -o -e .env -e .env.dev -e .env.dev.local -- node scripts/generate-config.js && n8n-node build",
+		"build:prod": "dotenv -o -e .env -e .env.prod -e .env.prod.local -- node scripts/generate-config.js && n8n-node build",
+		"build:watch": "dotenv -o -e .env -e .env.dev -e .env.dev.local -- node scripts/generate-config.js && tsc --watch",
+		"predev": "dotenv -o -e .env -e .env.dev -e .env.dev.local -- node scripts/generate-config.js",
+		"dev": "n8n-node dev",
+		"lint": "n8n-node lint",
+		"lint:fix": "n8n-node lint --fix",
+		"release": "n8n-node release",
+		"prepublishOnly": "n8n-node prerelease"
+	},
+	"files": [
+		"dist"
+	],
+	"n8n": {
+		"n8nNodesApiVersion": 1,
+		"strict": false,
+		"credentials": [
+			"dist/credentials/DreemApi.credentials.js",
+			"dist/credentials/DreemOAuth2Api.credentials.js"
+		],
+		"nodes": [
+			"dist/nodes/Dreem/Dreem.node.js"
+		]
+	},
+	"devDependencies": {
+		"@n8n/node-cli": "*",
+		"dotenv-cli": "^11.0.0",
+		"eslint": "9.32.0",
+		"prettier": "3.6.2",
+		"release-it": "^19.0.4",
+		"typescript": "5.9.2"
+	},
+	"peerDependencies": {
+		"n8n-workflow": "*"
+	}
 }
