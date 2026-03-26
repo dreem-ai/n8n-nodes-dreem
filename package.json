@@ -3,7 +3,7 @@
 	"version": "0.1.0",
 	"description": "Dreem nodes for n8n",
 	"license": "MIT",
-	"homepage": "",
+	"homepage": "https://dreem.ai",
 	"keywords": [
 		"n8n-community-node-package"
 	],
