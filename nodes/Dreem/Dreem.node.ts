@@ -1,3 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable n8n-nodes-base/node-param-description-wrong-for-dynamic-multi-options */
+/* eslint-disable n8n-nodes-base/node-param-display-name-wrong-for-dynamic-multi-options */
+/* eslint-disable n8n-nodes-base/node-param-description-wrong-for-dynamic-options */
+/* eslint-disable n8n-nodes-base/node-param-display-name-wrong-for-dynamic-options */
 import type {
 	IExecuteFunctions,
 	ILoadOptionsFunctions,
