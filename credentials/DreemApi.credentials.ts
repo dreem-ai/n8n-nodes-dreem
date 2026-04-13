@@ -39,7 +39,7 @@ export class DreemApi implements ICredentialType {
 	test: ICredentialTestRequest = {
 		request: {
 			baseURL: API_BASE_URL || 'https://gateway.dreem.ai',
-			url: '/studio/resources/talent-options',
+			url: '/studio/talents',
 			method: 'GET',
 		},
 	};

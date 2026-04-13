@@ -767,7 +767,7 @@ export class Dreem implements INodeType {
 							{
 								method: 'GET',
 								baseURL,
-								url: '/studio/resources/talent-options',
+								url: '/studio/talents',
 								qs: {
 									pageNumber,
 									pageSize,
@@ -832,7 +832,7 @@ export class Dreem implements INodeType {
 						{
 							method: 'GET',
 							baseURL,
-							url: '/styleguide/resources/shots',
+							url: '/studio/shots',
 							qs: { shotType },
 						},
 					)) as any;
@@ -999,7 +999,7 @@ export class Dreem implements INodeType {
 							{
 								method: 'POST',
 								baseURL,
-								url: '/ai-tool/generation/virtual-model',
+								url: '/ai-tool/virtual-model',
 								body,
 							},
 						);
@@ -1052,7 +1052,7 @@ export class Dreem implements INodeType {
 							{
 								method: 'POST',
 								baseURL,
-								url: '/ai-tool/generation/packshots',
+								url: '/ai-tool/packshot',
 								body,
 							},
 						);
@@ -1115,7 +1115,7 @@ export class Dreem implements INodeType {
 							{
 								method: 'POST',
 								baseURL,
-								url: '/ai-tool/generation/image-to-video',
+								url: '/ai-tool/image-to-video',
 								body,
 							},
 						);
@@ -1157,7 +1157,7 @@ export class Dreem implements INodeType {
 							{
 								method: 'GET',
 								baseURL,
-								url: '/studio/resources/talent-options',
+								url: '/studio/talents',
 								qs: queryParams,
 							},
 						)) as any;
@@ -1209,7 +1209,7 @@ export class Dreem implements INodeType {
 							{
 								method: 'GET',
 								baseURL,
-								url: '/styleguide/resources/shots',
+								url: '/studio/shots',
 								qs: queryParams,
 							},
 						)) as any;
