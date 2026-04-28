@@ -1,5 +1,5 @@
 {
-	"node": "@dreem/n8n-nodes-dreem",
+	"node": "n8n-nodes-dreem",
 	"nodeVersion": "1.0",
 	"codexVersion": "1.0",
 	"categories": ["Marketing & Content", "Productivity"],

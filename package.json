@@ -1,7 +1,7 @@
 {
 	"name": "n8n-nodes-dreem",
 	"version": "0.1.0",
-	"description": "Dreem nodes for n8n",
+	"description": "n8n community nodes for Dreem — AI-powered model shots, product shots, and video generation for e-commerce.",
 	"license": "MIT",
 	"homepage": "https://dreem.ai",
 	"keywords": [

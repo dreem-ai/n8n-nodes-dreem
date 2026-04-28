@@ -12,7 +12,7 @@ import type {
 	INodeTypeDescription,
 	JsonObject,
 } from 'n8n-workflow';
-import { NodeApiError, NodeOperationError } from 'n8n-workflow';
+import { NodeApiError, NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
 import { API_BASE_URL } from './config';
 
 export class Dreem implements INodeType {
@@ -27,8 +27,8 @@ export class Dreem implements INodeType {
 		defaults: {
 			name: 'Dreem',
 		},
-		inputs: ['main'],
-		outputs: ['main'],
+		inputs: [NodeConnectionTypes.Main],
+		outputs: [NodeConnectionTypes.Main],
 		credentials: [
 			{
 				name: 'dreemOAuth2Api',
