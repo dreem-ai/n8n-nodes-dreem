@@ -1,4 +1,4 @@
-# @dreem/n8n-nodes-dreem
+# n8n-nodes-dreem
 
 This is an n8n community node. It lets you use Dreem in your n8n workflows.
 
