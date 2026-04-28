@@ -11,7 +11,7 @@ export class DreemOAuth2Api implements ICredentialType {
 	extends = ['oAuth2Api'];
 	icon = 'file:dreem.svg' as const;
 	displayName = 'Dreem OAuth2 API';
-	documentationUrl = 'https://docs.dreem.ai/integrations/n8n';
+	documentationUrl = 'https://developer.dreem.ai/#integrations';
 
 	properties: INodeProperties[] = [
 		{

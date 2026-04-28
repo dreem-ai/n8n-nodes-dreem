@@ -10,7 +10,7 @@ export class DreemApi implements ICredentialType {
 	name = 'dreemApi';
 	displayName = 'Dreem API';
 	icon = 'file:dreem.svg' as const;
-	documentationUrl = 'https://docs.dreem.ai/integrations/n8n';
+	documentationUrl = 'https://developer.dreem.ai/#integrations';
 
 	properties: INodeProperties[] = [
 		{

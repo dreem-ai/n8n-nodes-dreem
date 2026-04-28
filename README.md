@@ -110,7 +110,7 @@ docker build -t n8n-nodes-dreem .
 ## Resources
 
 * [n8n community nodes documentation](https://docs.n8n.io/integrations/#community-nodes)
-* [Dreem documentation](https://docs.dreem.ai)
+* [Dreem documentation](https://developer.dreem.ai/#integrations)
 
 ## Version history
 

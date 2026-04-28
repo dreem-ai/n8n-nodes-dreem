@@ -6,12 +6,12 @@
 	"resources": {
 		"credentialDocumentation": [
 			{
-				"url": "https://docs.dreem.ai/integrations/n8n"
+				"url": "https://developer.dreem.ai/#integrations"
 			}
 		],
 		"primaryDocumentation": [
 			{
-				"url": "https://docs.dreem.ai/integrations/n8n"
+				"url": "https://developer.dreem.ai/#integrations"
 			}
 		]
 	}
