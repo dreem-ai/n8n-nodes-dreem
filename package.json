@@ -1,5 +1,5 @@
 {
-	"name": "@dreem/n8n-nodes-dreem",
+	"name": "n8n-nodes-dreem",
 	"version": "0.1.0",
 	"description": "Dreem nodes for n8n",
 	"license": "MIT",
@@ -8,12 +8,12 @@
 		"n8n-community-node-package"
 	],
 	"author": {
-		"name": "Hoang Thai Hoc",
-		"email": "hoc@creativeforce.io"
+		"name": "Dreem",
+		"email": "hello@dreem.ai"
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/dreem/n8n-nodes-dreem.git"
+		"url": "git+https://github.com/dreem-ai/n8n-nodes-dreem.git"
 	},
 	"scripts": {
 		"prebuild": "dotenv -o -e .env -e .env.dev -e .env.dev.local -- node scripts/generate-config.js",
@@ -52,5 +52,9 @@
 	},
 	"peerDependencies": {
 		"n8n-workflow": "*"
+	},
+	"packageManager": "npm@10.9.4",
+	"engines": {
+		"node": ">=22"
 	}
 }

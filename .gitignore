@@ -2,6 +2,11 @@
 node_modules/
 dist/
 
+# Other package managers (this repo standardizes on npm)
+pnpm-lock.yaml
+pnpm-workspace.yaml
+yarn.lock
+
 # Compiled Java class files
 *.class
 
