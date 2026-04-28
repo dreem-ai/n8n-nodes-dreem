@@ -1,9 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable n8n-nodes-base/node-param-description-wrong-for-dynamic-multi-options */
-/* eslint-disable n8n-nodes-base/node-param-display-name-wrong-for-dynamic-multi-options */
-/* eslint-disable n8n-nodes-base/node-param-description-wrong-for-dynamic-options */
-/* eslint-disable n8n-nodes-base/node-param-display-name-wrong-for-dynamic-options */
 import type {
+	IDataObject,
 	IExecuteFunctions,
 	ILoadOptionsFunctions,
 	INodeExecutionData,
@@ -14,6 +10,39 @@ import type {
 } from 'n8n-workflow';
 import { NodeApiError, NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
 import { API_BASE_URL } from './config';
+
+/**
+ * Dreem list endpoints return one of:
+ *   - an array of items
+ *   - { data: T[] }
+ *   - { data: { pageData: T[] } }
+ *   - { data: T }            (singular fallback, only honored when allowSingleObject=true)
+ */
+function extractItems<T extends IDataObject = IDataObject>(
+	response: unknown,
+	{ allowSingleObject = false } = {},
+): T[] {
+	if (Array.isArray(response)) return response as T[];
+	if (response && typeof response === 'object' && 'data' in response) {
+		const data = (response as { data: unknown }).data;
+		if (Array.isArray(data)) return data as T[];
+		if (data && typeof data === 'object' && 'pageData' in data) {
+			const pageData = (data as { pageData: unknown }).pageData;
+			if (Array.isArray(pageData)) return pageData as T[];
+		}
+		if (allowSingleObject && data && typeof data === 'object') {
+			return [data as T];
+		}
+	}
+	return [];
+}
+
+const pickString = (...candidates: unknown[]): string => {
+	for (const c of candidates) {
+		if (typeof c === 'string' && c.length > 0) return c;
+	}
+	return '';
+};
 
 export class Dreem implements INodeType {
 	description: INodeTypeDescription = {
@@ -132,7 +161,7 @@ export class Dreem implements INodeType {
 
 			// Talent Selection
 			{
-				displayName: 'Talent',
+				displayName: 'Talent Name or ID',
 				name: 'talentId',
 				type: 'options',
 				typeOptions: {
@@ -146,12 +175,14 @@ export class Dreem implements INodeType {
 						operation: ['generateModelShots'],
 					},
 				},
-				description: 'The AI model to use for generation',
+				hint: 'The AI model to use for generation',
+				description:
+					'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
 			},
 
 			// Shots Selection (Model Shots & Product Shots)
 			{
-				displayName: 'Shots',
+				displayName: 'Shot Names or IDs',
 				name: 'shotCodes',
 				type: 'multiOptions',
 				typeOptions: {
@@ -166,7 +197,9 @@ export class Dreem implements INodeType {
 					},
 				},
 				default: [],
-				description: 'Shots to generate',
+				hint: 'Shots to generate',
+				description:
+					'Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
 			},
 
 			// Front Image URL (required)
@@ -384,7 +417,7 @@ export class Dreem implements INodeType {
 			},
 			// Video Prompt ID (dropdown)
 			{
-				displayName: 'Prompt (Library)',
+				displayName: 'Prompt Name or ID',
 				name: 'promptId',
 				type: 'options',
 				typeOptions: {
@@ -397,7 +430,9 @@ export class Dreem implements INodeType {
 					},
 				},
 				default: '',
-				description: 'Select a video generation prompt from the library (optional)',
+				hint: 'Select a video generation prompt from the library (optional)',
+				description:
+					'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
 			},
 
 			// Video Prompt (text input)
@@ -757,11 +792,11 @@ export class Dreem implements INodeType {
 					let pageNumber = 1;
 					const pageSize = 100; // Maximum page size
 					let hasMoreData = true;
-					let allTalents: any[] = [];
+					const allTalents: IDataObject[] = [];
 
 					// Loop through all pages to get all talents
 					while (hasMoreData) {
-						const apiResponse = (await this.helpers.httpRequestWithAuthentication.call(
+						const apiResponse = await this.helpers.httpRequestWithAuthentication.call(
 							this,
 							credentialType,
 							{
@@ -773,24 +808,11 @@ export class Dreem implements INodeType {
 									pageSize,
 								},
 							},
-						)) as any;
+						);
 
-						let talents: any[] = [];
+						const talents = extractItems(apiResponse);
+						allTalents.push(...talents);
 
-						if (Array.isArray(apiResponse)) {
-							talents = apiResponse;
-						} else if (apiResponse?.data) {
-							if (Array.isArray(apiResponse.data)) {
-								talents = apiResponse.data;
-							} else if (apiResponse.data.pageData && Array.isArray(apiResponse.data.pageData)) {
-								talents = apiResponse.data.pageData;
-							}
-						}
-
-						// Add talents from current page
-						allTalents = allTalents.concat(talents);
-
-						// Check if there are more pages
 						if (talents.length < pageSize) {
 							hasMoreData = false;
 						} else {
@@ -798,12 +820,12 @@ export class Dreem implements INodeType {
 						}
 					}
 
-					// Convert all talents to options
 					for (const talent of allTalents) {
-						returnData.push({
-							name: talent.label || talent.name || 'Unknown',
-							value: talent.value || talent.talentId || talent.id,
-						});
+						const name = pickString(talent.label, talent.name) || 'Unknown';
+						const value = pickString(talent.value, talent.talentId, talent.id);
+						if (value) {
+							returnData.push({ name, value });
+						}
 					}
 
 					return returnData;
@@ -826,7 +848,7 @@ export class Dreem implements INodeType {
 					const operation = this.getNodeParameter('operation', 0) as string;
 					const shotType = operation === 'generateModelShots' ? 1 : 0;
 
-					const apiResponse = (await this.helpers.httpRequestWithAuthentication.call(
+					const apiResponse = await this.helpers.httpRequestWithAuthentication.call(
 						this,
 						credentialType,
 						{
@@ -835,34 +857,24 @@ export class Dreem implements INodeType {
 							url: '/studio/shots',
 							qs: { shotType },
 						},
-					)) as any;
+					);
 
-					// Handle different response structures
-					let shots: any[] = [];
-
-					if (Array.isArray(apiResponse)) {
-						shots = apiResponse;
-					} else if (apiResponse?.data) {
-						if (Array.isArray(apiResponse.data)) {
-							shots = apiResponse.data;
-						} else if (apiResponse.data.pageData && Array.isArray(apiResponse.data.pageData)) {
-							shots = apiResponse.data.pageData;
-						}
-					}
-
+					const shots = extractItems(apiResponse);
 					for (const shot of shots) {
-						returnData.push({
-							name: shot.name || shot.shotName,
-							value: shot.code || shot.shotCode,
-							description: shot.code || shot.shotCode || '',
-						});
+						const name = pickString(shot.name, shot.shotName) || 'Unknown';
+						const value = pickString(shot.code, shot.shotCode);
+						if (value) {
+							returnData.push({ name, value, description: value });
+						}
 					}
 
 					return returnData;
 				} catch (error) {
 					throw new NodeApiError(this.getNode(), error as JsonObject);
 				}
-			}, // Load video prompts for dropdown
+			},
+
+			// Load video prompts for dropdown
 			async getVideoPrompts(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
 				const credentialType =
 					(this.getNodeParameter('authentication', 0) as string) === 'apiKey'
@@ -871,7 +883,7 @@ export class Dreem implements INodeType {
 				const returnData: INodePropertyOptions[] = [];
 				try {
 					const baseURL = API_BASE_URL;
-					const requestBody: Record<string, any> = {
+					const requestBody: IDataObject = {
 						keyword: '',
 						pageNum: 1,
 						pageSize: 100,
@@ -879,7 +891,7 @@ export class Dreem implements INodeType {
 					// Don't include gender parameter to get all genders
 
 					// Get video prompts from API
-					const apiResponse = (await this.helpers.httpRequestWithAuthentication.call(
+					const apiResponse = await this.helpers.httpRequestWithAuthentication.call(
 						this,
 						credentialType,
 						{
@@ -888,29 +900,21 @@ export class Dreem implements INodeType {
 							url: '/studio/video-prompts/list',
 							body: requestBody,
 						},
-					)) as any;
+					);
 
-					// Handle response structure
-					let prompts: any[] = [];
-
-					if (Array.isArray(apiResponse)) {
-						prompts = apiResponse;
-					} else if (apiResponse?.data) {
-						if (Array.isArray(apiResponse.data)) {
-							prompts = apiResponse.data;
-						} else if (apiResponse.data.pageData && Array.isArray(apiResponse.data.pageData)) {
-							prompts = apiResponse.data.pageData;
-						}
-					}
-
+					const prompts = extractItems(apiResponse);
 					// Filter only SYSTEM sourceType prompts
-					const systemPrompts = prompts.filter((prompt: any) => prompt.sourceType === 'SYSTEM');
+					const systemPrompts = prompts.filter((prompt) => prompt.sourceType === 'SYSTEM');
 					for (const prompt of systemPrompts) {
-						returnData.push({
-							name: prompt.name || prompt.title || prompt.prompt || 'Unknown',
-							value: prompt.id || prompt.promptId,
-							description: prompt.description || '',
-						});
+						const name = pickString(prompt.name, prompt.title, prompt.prompt) || 'Unknown';
+						const value = pickString(prompt.id, prompt.promptId);
+						if (value) {
+							returnData.push({
+								name,
+								value,
+								description: pickString(prompt.description),
+							});
+						}
 					}
 
 					return returnData;
@@ -1138,7 +1142,7 @@ export class Dreem implements INodeType {
 						const talentPageSize = this.getNodeParameter('talentPageSize', i) as number;
 
 						// Build query parameters
-						const queryParams: Record<string, any> = {
+						const queryParams: IDataObject = {
 							pageNumber: talentPageNumber,
 							pageSize: talentPageSize,
 						};
@@ -1146,12 +1150,13 @@ export class Dreem implements INodeType {
 						// Only include gender if not "All" (0)
 						if (talentGender !== 0) {
 							queryParams.gender = talentGender;
-						} // Only include keyword if provided
+						}
+						// Only include keyword if provided
 						if (talentKeyword) {
 							queryParams.keyword = talentKeyword;
 						}
 
-						const apiResponse = (await this.helpers.httpRequestWithAuthentication.call(
+						const apiResponse = await this.helpers.httpRequestWithAuthentication.call(
 							this,
 							credentialType,
 							{
@@ -1160,23 +1165,9 @@ export class Dreem implements INodeType {
 								url: '/studio/talents',
 								qs: queryParams,
 							},
-						)) as any;
+						);
 
-						// Handle different response structures
-						let talents: any[] = [];
-
-						if (Array.isArray(apiResponse)) {
-							talents = apiResponse;
-						} else if (apiResponse?.data) {
-							if (Array.isArray(apiResponse.data)) {
-								talents = apiResponse.data;
-							} else if (apiResponse.data.pageData && Array.isArray(apiResponse.data.pageData)) {
-								talents = apiResponse.data.pageData;
-							} else if (typeof apiResponse.data === 'object') {
-								talents = [apiResponse.data];
-							}
-						}
-
+						const talents = extractItems(apiResponse, { allowSingleObject: true });
 						for (const talent of talents) {
 							returnData.push({
 								json: talent,
@@ -1190,7 +1181,7 @@ export class Dreem implements INodeType {
 						const shotPageSize = this.getNodeParameter('shotPageSize', i) as number;
 
 						// Build query parameters
-						const queryParams: Record<string, any> = {
+						const queryParams: IDataObject = {
 							pageNumber: shotPageNumber,
 							pageSize: shotPageSize,
 						};
@@ -1198,12 +1189,13 @@ export class Dreem implements INodeType {
 						// Only include shotType if not "All" (-1)
 						if (shotType !== -1) {
 							queryParams.shotType = shotType;
-						} // Only include keyword if provided
+						}
+						// Only include keyword if provided
 						if (shotKeyword) {
 							queryParams.keyword = shotKeyword;
 						}
 
-						const apiResponse = (await this.helpers.httpRequestWithAuthentication.call(
+						const apiResponse = await this.helpers.httpRequestWithAuthentication.call(
 							this,
 							credentialType,
 							{
@@ -1212,23 +1204,9 @@ export class Dreem implements INodeType {
 								url: '/studio/shots',
 								qs: queryParams,
 							},
-						)) as any;
+						);
 
-						// Handle different response structures
-						let shots: any[] = [];
-
-						if (Array.isArray(apiResponse)) {
-							shots = apiResponse;
-						} else if (apiResponse?.data) {
-							if (Array.isArray(apiResponse.data)) {
-								shots = apiResponse.data;
-							} else if (apiResponse.data.pageData && Array.isArray(apiResponse.data.pageData)) {
-								shots = apiResponse.data.pageData;
-							} else if (typeof apiResponse.data === 'object') {
-								shots = [apiResponse.data];
-							}
-						}
-
+						const shots = extractItems(apiResponse, { allowSingleObject: true });
 						for (const shot of shots) {
 							returnData.push({
 								json: shot,
@@ -1241,16 +1219,17 @@ export class Dreem implements INodeType {
 						const pageNum = this.getNodeParameter('pageNum', i) as number;
 						const pageSize = this.getNodeParameter('pageSize', i) as number;
 
-						const requestBody: Record<string, any> = {
+						const requestBody: IDataObject = {
 							keyword,
 							pageNum,
 							pageSize,
-						}; // Only include gender if not "All" (0)
+						};
+						// Only include gender if not "All" (0)
 						if (gender !== 0) {
 							requestBody.gender = gender;
 						}
 
-						const apiResponse = (await this.helpers.httpRequestWithAuthentication.call(
+						const apiResponse = await this.helpers.httpRequestWithAuthentication.call(
 							this,
 							credentialType,
 							{
@@ -1259,23 +1238,11 @@ export class Dreem implements INodeType {
 								url: '/studio/video-prompts/list',
 								body: requestBody,
 							},
-						)) as any;
+						);
 
-						// Handle different response structures
-						let prompts: any[] = [];
-						if (Array.isArray(apiResponse)) {
-							prompts = apiResponse;
-						} else if (apiResponse?.data) {
-							if (Array.isArray(apiResponse.data)) {
-								prompts = apiResponse.data;
-							} else if (apiResponse.data.pageData && Array.isArray(apiResponse.data.pageData)) {
-								prompts = apiResponse.data.pageData;
-							} else if (typeof apiResponse.data === 'object') {
-								prompts = [apiResponse.data];
-							}
-						} // Filter only SYSTEM sourceType prompts
-						const systemPrompts = prompts.filter((prompt: any) => prompt.sourceType === 'SYSTEM');
-
+						const prompts = extractItems(apiResponse, { allowSingleObject: true });
+						// Filter only SYSTEM sourceType prompts
+						const systemPrompts = prompts.filter((prompt) => prompt.sourceType === 'SYSTEM');
 						for (const prompt of systemPrompts) {
 							returnData.push({ json: prompt, pairedItem: { item: i } });
 						}
