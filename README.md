@@ -1,5 +1,9 @@
 # n8n-nodes-dreem
 
+[![npm version](https://img.shields.io/npm/v/n8n-nodes-dreem.svg)](https://www.npmjs.com/package/n8n-nodes-dreem)
+[![npm downloads](https://img.shields.io/npm/dm/n8n-nodes-dreem.svg)](https://www.npmjs.com/package/n8n-nodes-dreem)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 This is an n8n community node. It lets you use Dreem in your n8n workflows.
 
 [Dreem](https://dreem.ai) is an AI-powered image generation platform for e-commerce, enabling you to create professional model shots and product shots from simple product images.
