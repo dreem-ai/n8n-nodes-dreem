@@ -16,12 +16,7 @@
 		"url": "git+https://github.com/dreem-ai/n8n-nodes-dreem.git"
 	},
 	"scripts": {
-		"prebuild": "dotenv -o -e .env -e .env.dev -e .env.dev.local -- node scripts/generate-config.js",
 		"build": "n8n-node build",
-		"build:dev": "dotenv -o -e .env -e .env.dev -e .env.dev.local -- node scripts/generate-config.js && n8n-node build",
-		"build:prod": "dotenv -o -e .env -e .env.prod -e .env.prod.local -- node scripts/generate-config.js && n8n-node build",
-		"build:watch": "dotenv -o -e .env -e .env.dev -e .env.dev.local -- node scripts/generate-config.js && tsc --watch",
-		"predev": "dotenv -o -e .env -e .env.dev -e .env.dev.local -- node scripts/generate-config.js",
 		"dev": "n8n-node dev",
 		"lint": "n8n-node lint",
 		"lint:fix": "n8n-node lint --fix",
@@ -44,7 +39,6 @@
 	},
 	"devDependencies": {
 		"@n8n/node-cli": "*",
-		"dotenv-cli": "^11.0.0",
 		"eslint": "9.32.0",
 		"prettier": "3.6.2",
 		"release-it": "^19.0.4",
