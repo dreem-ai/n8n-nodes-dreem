@@ -1,17 +1,17 @@
 {
-	"node": "@dreem/n8n-nodes-dreem",
+	"node": "n8n-nodes-dreem",
 	"nodeVersion": "1.0",
 	"codexVersion": "1.0",
-	"categories": ["Marketing & Content", "Productivity"],
+	"categories": ["Marketing", "Productivity"],
 	"resources": {
 		"credentialDocumentation": [
 			{
-				"url": "https://docs.dreem.ai/integrations/n8n"
+				"url": "https://developer.dreem.ai/#integrations"
 			}
 		],
 		"primaryDocumentation": [
 			{
-				"url": "https://docs.dreem.ai/integrations/n8n"
+				"url": "https://developer.dreem.ai/#integrations"
 			}
 		]
 	}

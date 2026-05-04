@@ -1,4 +1,4 @@
-# @dreem/n8n-nodes-dreem
+# n8n-nodes-dreem
 
 This is an n8n community node. It lets you use Dreem in your n8n workflows.
 
@@ -24,13 +24,15 @@ Follow the [installation guide](https://docs.n8n.io/integrations/community-nodes
 
 - **Generate Model Shots** — Try your product on different AI models and shots. Requires a talent (AI model), shot selection, and at least one product image. Supports optional back and styling images.
 - **Generate Product Shots** — Generate clean, studio-style product shots. Requires shot selection and at least one product image.
+- **Generate Video** — Convert a product image into an animated video. Requires an image URL, duration (5s or 10s), and output aspect ratio (1:1, 3:4, or 9:16). Optionally select a motion prompt from the library or provide custom text.
 
-Both generation operations support configurable output format (PNG/JPEG), aspect ratio, and an optional webhook callback URL.
+All generation operations support configurable output format (PNG/JPEG for images), aspect ratio, and an optional webhook callback URL for receiving results asynchronously.
 
 ### Library
 
-- **Get Available Talents** — List all available AI models.
-- **Get Available Shots** — List all available shots.
+- **Get Available Talents** — List all available AI models for virtual model generation. Supports filtering by gender and keyword search.
+- **Get Available Shots** — List all available shots for image generation. Supports filtering by shot type and keyword search.
+- **Get Video Prompts** — Browse available video animation prompts for video generation. Supports filtering by gender, keyword search, and pagination.
 
 ### Task
 
@@ -55,11 +57,24 @@ Tested with n8n v1.x. Requires n8n Nodes API version 1.
 4. For generation operations, provide product image URLs and select your desired shots.
 5. Generation is asynchronous — use the **Task → Get Status** operation with the returned request ID to poll for results, or provide a webhook URL to receive results automatically.
 
+## Build & Docker
+
+```bash
+npm run build           # Compile TypeScript and copy assets to dist/
+```
+
+The Dockerfile copies the pre-built `dist/` to `/opt/custom-nodes` and sets `N8N_CUSTOM_EXTENSIONS=/opt/custom-nodes`:
+
+```bash
+npm run build
+docker build -t n8n-nodes-dreem .
+```
+
 ## Resources
 
 * [n8n community nodes documentation](https://docs.n8n.io/integrations/#community-nodes)
-* [Dreem documentation](https://docs.dreem.ai)
+* [Dreem documentation](https://developer.dreem.ai/#integrations)
 
 ## Version history
 
-- **0.1.0** — Initial release with model shot generation, product shot generation, library browsing, and task status tracking.
+- **0.1.0** — Initial release with model shot generation, product shot generation, video generation, library browsing (talents, shots, video prompts), and task status tracking.

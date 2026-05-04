@@ -4,12 +4,13 @@ import {
 	ICredentialType,
 	INodeProperties,
 } from 'n8n-workflow';
+import { API_BASE_URL } from '../nodes/Dreem/config';
 
 export class DreemApi implements ICredentialType {
 	name = 'dreemApi';
 	displayName = 'Dreem API';
 	icon = 'file:dreem.svg' as const;
-	documentationUrl = 'https://docs.dreem.ai/integrations/n8n';
+	documentationUrl = 'https://developer.dreem.ai/#integrations';
 
 	properties: INodeProperties[] = [
 		{
@@ -19,7 +20,8 @@ export class DreemApi implements ICredentialType {
 			typeOptions: { password: true },
 			default: '',
 			placeholder: 'dreem_pk_xxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-			description: 'API key issued by Dreem (starts with dreem_pk_). Generate from your Dreem dashboard under Settings → API Management.',
+			description:
+				'API key issued by Dreem (starts with dreem_pk_). Generate from your Dreem dashboard under Settings → API Management.',
 		},
 	];
 
@@ -27,17 +29,17 @@ export class DreemApi implements ICredentialType {
 		type: 'generic',
 		properties: {
 			headers: {
-				'Authorization': '={{$credentials.apiKey}}',
+				Authorization: '={{$credentials.apiKey}}',
 				'Content-Type': 'application/json',
-				'Accept': 'application/json',
+				Accept: 'application/json',
 			},
 		},
 	};
 
 	test: ICredentialTestRequest = {
 		request: {
-			baseURL: process.env.DREEM_API_BASE_URL || 'https://gateway.dreem.ai',
-			url: '/studio/resources/talent-options',
+			baseURL: API_BASE_URL || 'https://gateway.dreem.ai',
+			url: '/studio/talents',
 			method: 'GET',
 		},
 	};

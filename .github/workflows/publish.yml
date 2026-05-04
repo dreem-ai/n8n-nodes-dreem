@@ -1,0 +1,44 @@
+name: Publish
+
+# Triggered when `npm run release` (run locally) pushes a `v*` tag.
+# In CI, `npm run release` detects GITHUB_ACTIONS=true and runs
+# lint + build + `npm publish` with provenance — no separate steps needed.
+# See: node_modules/@n8n/node-cli/dist/commands/release.js
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  publish:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+
+    permissions:
+      # Required by npm provenance to mint an OIDC token.
+      id-token: write
+      # Scoped down from the default to least-privilege.
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: 'npm'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Release
+        # `n8n-node release` (invoked via `npm run release`) detects CI via
+        # GITHUB_ACTIONS and runs lint, build, and `npm publish` with
+        # RELEASE_MODE=true and NPM_CONFIG_PROVENANCE=true automatically.
+        # NODE_AUTH_TOKEN is inherited by the publish child process.
+        run: npm run release
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

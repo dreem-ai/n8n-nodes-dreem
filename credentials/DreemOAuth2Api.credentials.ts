@@ -4,13 +4,14 @@ import {
 	ICredentialType,
 	INodeProperties,
 } from 'n8n-workflow';
+import { ACCOUNTS_BASE_URL, API_BASE_URL } from '../nodes/Dreem/config';
 
 export class DreemOAuth2Api implements ICredentialType {
 	name = 'dreemOAuth2Api';
 	extends = ['oAuth2Api'];
 	icon = 'file:dreem.svg' as const;
 	displayName = 'Dreem OAuth2 API';
-	documentationUrl = 'https://docs.dreem.ai/integrations/n8n';
+	documentationUrl = 'https://developer.dreem.ai/#integrations';
 
 	properties: INodeProperties[] = [
 		{
@@ -24,7 +25,8 @@ export class DreemOAuth2Api implements ICredentialType {
 			name: 'clientId',
 			type: 'hidden',
 			default: 'dreem',
-			description: 'The OAuth2 Client ID for n8n integration. Pre-configured for standard n8n usage.',
+			description:
+				'The OAuth2 Client ID for n8n integration. Pre-configured for standard n8n usage.',
 		},
 		{
 			displayName: 'Client Secret',
@@ -40,14 +42,14 @@ export class DreemOAuth2Api implements ICredentialType {
 			displayName: 'Authorization URL',
 			name: 'authUrl',
 			type: 'hidden',
-			default: `${process.env.DREEM_ACCOUNTS_API_BASE_URL || 'https://accounts.dreem.ai'}/connect/authorize`,
+			default: `${ACCOUNTS_BASE_URL || 'https://accounts.dreem.ai'}/connect/authorize`,
 			required: true,
 		},
 		{
 			displayName: 'Access Token URL',
 			name: 'accessTokenUrl',
 			type: 'hidden',
-			default: `${process.env.DREEM_ACCOUNTS_API_BASE_URL || 'https://accounts.dreem.ai'}/connect/token`,
+			default: `${ACCOUNTS_BASE_URL || 'https://accounts.dreem.ai'}/connect/token`,
 			required: true,
 		},
 		{
@@ -88,8 +90,10 @@ export class DreemOAuth2Api implements ICredentialType {
 					scope: ['custom'],
 				},
 			},
-			default: 'openid offline_access generations:write generations:read talents:read shots:read requests:read',
-			description: 'Space-separated list of OAuth scopes. Always include "openid offline_access" for token refresh.',
+			default:
+				'openid offline_access generations:write generations:read talents:read shots:read requests:read',
+			description:
+				'Space-separated list of OAuth scopes. Always include "openid offline_access" for token refresh.',
 			hint: 'Available scopes: public_api_scope, generations:write, generations:read, talents:read, shots:read, requests:read',
 		},
 		{
@@ -116,8 +120,8 @@ export class DreemOAuth2Api implements ICredentialType {
 	};
 	test: ICredentialTestRequest = {
 		request: {
-			baseURL: process.env.DREEM_API_BASE_URL || 'https://gateway.dreem.ai',
-			url: '/studio/resources/talent-options',
+			baseURL: API_BASE_URL || 'https://gateway.dreem.ai',
+			url: '/studio/talents',
 			method: 'GET',
 		},
 	};
