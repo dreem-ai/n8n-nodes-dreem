@@ -51,7 +51,6 @@ Thumbs.db
 # Local environments
 .env
 .env.*
-!.env.example
 
 # Temporary files
 tmp/
