@@ -1,4 +1,4 @@
-name: Release
+name: Publish
 
 # Triggered when `npm run release` (run locally) pushes a `v*` tag.
 # In CI, `npm run release` detects GITHUB_ACTIONS=true and runs
