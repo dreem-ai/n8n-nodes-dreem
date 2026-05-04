@@ -10,6 +10,8 @@ This is an n8n community node. It lets you use Dreem in your n8n workflows.
 
 [n8n](https://n8n.io/) is a [fair-code licensed](https://docs.n8n.io/sustainable-use-license/) workflow automation platform.
 
+![Dreem node in an n8n workflow](https://raw.githubusercontent.com/dreem-ai/n8n-nodes-dreem/main/docs/images/n8n-nodes-dreem-screenshot.png)
+
 [Installation](#installation)
 [Operations](#operations)
 [Credentials](#credentials)
