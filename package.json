@@ -48,6 +48,11 @@
 	"peerDependencies": {
 		"n8n-workflow": "*"
 	},
+	"release-it": {
+		"git": {
+			"tagName": "v${version}"
+		}
+	},
 	"packageManager": "npm@10.9.4",
 	"engines": {
 		"node": ">=22"
