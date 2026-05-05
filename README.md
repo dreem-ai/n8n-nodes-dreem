@@ -63,19 +63,6 @@ Tested with n8n v1.x. Requires n8n Nodes API version 1.
 4. For generation operations, provide product image URLs and select your desired shots.
 5. Generation is asynchronous — use the **Task → Get Status** operation with the returned request ID to poll for results, or provide a webhook URL to receive results automatically.
 
-## Build & Docker
-
-```bash
-npm run build           # Compile TypeScript and copy assets to dist/
-```
-
-The Dockerfile copies the pre-built `dist/` to `/opt/custom-nodes` and sets `N8N_CUSTOM_EXTENSIONS=/opt/custom-nodes`:
-
-```bash
-npm run build
-docker build -t n8n-nodes-dreem .
-```
-
 ## Resources
 
 * [n8n community nodes documentation](https://docs.n8n.io/integrations/#community-nodes)
