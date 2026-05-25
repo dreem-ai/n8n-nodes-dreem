@@ -1282,7 +1282,10 @@ export class Dreem implements INodeType {
 					});
 					continue;
 				}
-				throw error;
+				if (error instanceof NodeApiError || error instanceof NodeOperationError) {
+					throw error;
+				}
+				throw new NodeApiError(this.getNode(), error as JsonObject, { itemIndex: i });
 			}
 		}
 
