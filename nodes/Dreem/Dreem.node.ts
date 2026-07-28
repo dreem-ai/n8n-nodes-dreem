@@ -44,6 +44,57 @@ const pickString = (...candidates: unknown[]): string => {
 	return '';
 };
 
+/**
+ * Reads a single attribute's values out of the generic /attributes response.
+ * Envelope: { data: { type, attributes: { <key>: string[] } } }; also tolerates the
+ * unwrapped { attributes: {...} } or a bare { <key>: [...] } shape.
+ */
+function extractAttributeValues(response: unknown, attributeKey: string): string[] {
+	const root =
+		response && typeof response === 'object' && 'data' in response
+			? (response as { data: unknown }).data
+			: response;
+	if (root && typeof root === 'object') {
+		const container = 'attributes' in root ? (root as { attributes: unknown }).attributes : root;
+		if (container && typeof container === 'object') {
+			const list = (container as Record<string, unknown>)[attributeKey];
+			if (Array.isArray(list)) {
+				return list.filter((v): v is string => typeof v === 'string' && v.length > 0);
+			}
+		}
+	}
+	return [];
+}
+
+/**
+ * Loads the selectable values for one talent trait attribute from the generic
+ * /studio/attributes endpoint and maps them to node options. The endpoint
+ * returns all attribute types for the object type; we pick the one we need.
+ */
+async function loadTalentAttributeOptions(
+	ctx: ILoadOptionsFunctions,
+	attributeKey: string,
+): Promise<INodePropertyOptions[]> {
+	const credentialType =
+		(ctx.getNodeParameter('authentication', 0) as string) === 'apiKey'
+			? 'dreemApi'
+			: 'dreemOAuth2Api';
+	try {
+		const apiResponse = await ctx.helpers.httpRequestWithAuthentication.call(ctx, credentialType, {
+			method: 'GET',
+			baseURL: API_BASE_URL,
+			url: '/studio/attributes',
+			qs: { type: 'Talent' },
+		});
+		return extractAttributeValues(apiResponse, attributeKey).map((value) => ({
+			name: value,
+			value,
+		}));
+	} catch (error) {
+		throw new NodeApiError(ctx.getNode(), error as JsonObject);
+	}
+}
+
 export class Dreem implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'Dreem',
@@ -499,6 +550,12 @@ export class Dreem implements INodeType {
 						description: 'List available video generation prompts',
 						action: 'Get video prompts',
 					},
+					{
+						name: 'Search Talents',
+						value: 'searchTalents',
+						description: 'Semantically search AI models by a free-text brief',
+						action: 'Search talents',
+					},
 				],
 				default: 'getAvailableTalents',
 			}, // --------------------------------------------------------
@@ -576,6 +633,126 @@ export class Dreem implements INodeType {
 				typeOptions: {
 					minValue: 1,
 					maxValue: 100,
+				},
+			},
+
+			// Age Group trait filter for Talents (values loaded from the API)
+			{
+				displayName: 'Age Group Names or IDs',
+				name: 'talentAgeGroup',
+				type: 'multiOptions',
+				typeOptions: {
+					loadOptionsMethod: 'getTalentAgeGroups',
+				},
+				displayOptions: {
+					show: {
+						resource: ['library'],
+						operation: ['getAvailableTalents'],
+					},
+				},
+				default: [],
+				hint: 'Filter by age group. Multiple values are OR-ed together.',
+				description:
+					'Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
+			},
+
+			// Body Build trait filter for Talents (values loaded from the API)
+			{
+				displayName: 'Body Build Names or IDs',
+				name: 'talentBodyBuild',
+				type: 'multiOptions',
+				typeOptions: {
+					loadOptionsMethod: 'getTalentBodyBuilds',
+				},
+				displayOptions: {
+					show: {
+						resource: ['library'],
+						operation: ['getAvailableTalents'],
+					},
+				},
+				default: [],
+				hint: 'Filter by body build. Multiple values are OR-ed together.',
+				description:
+					'Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
+			},
+
+			// Ethnicity trait filter for Talents (values loaded from the API)
+			{
+				displayName: 'Ethnicity Names or IDs',
+				name: 'talentEthnicity',
+				type: 'multiOptions',
+				typeOptions: {
+					loadOptionsMethod: 'getTalentEthnicities',
+				},
+				displayOptions: {
+					show: {
+						resource: ['library'],
+						operation: ['getAvailableTalents'],
+					},
+				},
+				default: [],
+				hint: 'Filter by ethnicity. Multiple values are OR-ed together.',
+				description:
+					'Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
+			},
+
+			// --------------------------------------------------------
+			// Library > Search Talents — Fields
+			// --------------------------------------------------------
+			// Free-text brief for semantic search
+			{
+				displayName: 'Search Keyword',
+				name: 'searchKeyword',
+				type: 'string',
+				displayOptions: {
+					show: {
+						resource: ['library'],
+						operation: ['searchTalents'],
+					},
+				},
+				default: '',
+				placeholder: 'e.g., scandinavian blonde 20s',
+				description:
+					'Free-text brief describing the talent. Descriptors such as ethnicity and body build are matched semantically. Leave empty to return the most recent talents for the selected gender.',
+			},
+
+			// Gender for semantic search (required, Male/Female only)
+			{
+				displayName: 'Gender',
+				name: 'searchGender',
+				type: 'options',
+				required: true,
+				displayOptions: {
+					show: {
+						resource: ['library'],
+						operation: ['searchTalents'],
+					},
+				},
+				options: [
+					{ name: 'Female', value: 2 },
+					{ name: 'Male', value: 1 },
+				],
+				default: 2,
+				description:
+					'Required. The semantic talent index only covers Male and Female talents.',
+			},
+
+			// Limit (top-K) for semantic search
+			{
+				displayName: 'Limit',
+				name: 'searchLimit',
+				type: 'number',
+				displayOptions: {
+					show: {
+						resource: ['library'],
+						operation: ['searchTalents'],
+					},
+				},
+				default: 5,
+				description: 'Number of top-ranked matches to return (maps to page size, clamped 1–20)',
+				typeOptions: {
+					minValue: 1,
+					maxValue: 20,
 				},
 			},
 
@@ -832,6 +1009,19 @@ export class Dreem implements INodeType {
 				} catch (error) {
 					throw new NodeApiError(this.getNode(), error as JsonObject);
 				}
+			},
+
+			// Load talent trait filter values from the generic /attributes endpoint
+			async getTalentAgeGroups(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+				return loadTalentAttributeOptions(this, 'ageGroup');
+			},
+
+			async getTalentEthnicities(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+				return loadTalentAttributeOptions(this, 'ethnicity');
+			},
+
+			async getTalentBodyBuilds(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+				return loadTalentAttributeOptions(this, 'bodyBuild');
 			},
 
 			// Load shots for dropdown, filtered by shotType based on operation
@@ -1140,6 +1330,9 @@ export class Dreem implements INodeType {
 						const talentKeyword = this.getNodeParameter('talentKeyword', i, '') as string;
 						const talentPageNumber = this.getNodeParameter('talentPageNumber', i) as number;
 						const talentPageSize = this.getNodeParameter('talentPageSize', i) as number;
+						const talentAgeGroup = this.getNodeParameter('talentAgeGroup', i, []) as string[];
+						const talentBodyBuild = this.getNodeParameter('talentBodyBuild', i, []) as string[];
+						const talentEthnicity = this.getNodeParameter('talentEthnicity', i, []) as string[];
 
 						// Build query parameters
 						const queryParams: IDataObject = {
@@ -1154,6 +1347,17 @@ export class Dreem implements INodeType {
 						// Only include keyword if provided
 						if (talentKeyword) {
 							queryParams.keyword = talentKeyword;
+						}
+						// Structured trait filters (repeatable). Sent as arrays so the backend
+						// receives repeated query keys (e.g. ageGroup=Teen&ageGroup=Senior).
+						if (talentAgeGroup.length) {
+							queryParams.ageGroup = talentAgeGroup;
+						}
+						if (talentBodyBuild.length) {
+							queryParams.bodyBuild = talentBodyBuild;
+						}
+						if (talentEthnicity.length) {
+							queryParams.ethnicity = talentEthnicity;
 						}
 
 						const apiResponse = await this.helpers.httpRequestWithAuthentication.call(
@@ -1245,6 +1449,41 @@ export class Dreem implements INodeType {
 						const systemPrompts = prompts.filter((prompt) => prompt.sourceType === 'SYSTEM');
 						for (const prompt of systemPrompts) {
 							returnData.push({ json: prompt, pairedItem: { item: i } });
+						}
+					} else if (operation === 'searchTalents') {
+						const searchKeyword = this.getNodeParameter('searchKeyword', i, '') as string;
+						const searchGender = this.getNodeParameter('searchGender', i) as number;
+						const searchLimit = this.getNodeParameter('searchLimit', i) as number;
+
+						// pageNumber is only present for the response envelope shape; the endpoint
+						// returns the top-K ranked matches rather than a real page.
+						const queryParams: IDataObject = {
+							gender: searchGender,
+							pageNumber: 1,
+							pageSize: searchLimit,
+						};
+						// Only include keyword if provided (empty = most recent for the gender)
+						if (searchKeyword) {
+							queryParams.keyword = searchKeyword;
+						}
+
+						const apiResponse = await this.helpers.httpRequestWithAuthentication.call(
+							this,
+							credentialType,
+							{
+								method: 'GET',
+								baseURL,
+								url: '/studio/talents/search',
+								qs: queryParams,
+							},
+						);
+
+						const talents = extractItems(apiResponse, { allowSingleObject: true });
+						for (const talent of talents) {
+							returnData.push({
+								json: talent,
+								pairedItem: { item: i },
+							});
 						}
 					}
 				}
