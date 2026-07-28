@@ -24,7 +24,7 @@ export class DreemOAuth2Api implements ICredentialType {
 			displayName: 'Client ID',
 			name: 'clientId',
 			type: 'hidden',
-			default: 'dreem',
+			default: 'public-api',
 			description:
 				'The OAuth2 Client ID for n8n integration. Pre-configured for standard n8n usage.',
 		},
