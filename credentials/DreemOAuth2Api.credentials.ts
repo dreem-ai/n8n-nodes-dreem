@@ -64,17 +64,17 @@ export class DreemOAuth2Api implements ICredentialType {
 				},
 				{
 					name: 'Generation Only',
-					value: 'openid offline_access generations:write generations:read requests:read',
+					value: 'openid offline_access public_api_generations_only',
 					description: 'Create and monitor AI generations',
 				},
 				{
 					name: 'Read Only',
-					value: 'openid offline_access generations:read talents:read shots:read requests:read',
+					value: 'openid offline_access public_api_read_only',
 					description: 'View resources and generation history',
 				},
 				{
 					name: 'Custom',
-					value: 'custom',
+					value: 'openid offline_access public_api_custom',
 					description: 'Specify custom scopes',
 				},
 			],
