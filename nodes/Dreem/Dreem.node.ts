@@ -551,10 +551,22 @@ export class Dreem implements INodeType {
 						action: 'Get video prompts',
 					},
 					{
+						name: 'Search Shots',
+						value: 'searchShots',
+						description: 'Semantically search shots (poses) by a free-text brief',
+						action: 'Search shots',
+					},
+					{
 						name: 'Search Talents',
 						value: 'searchTalents',
 						description: 'Semantically search AI models by a free-text brief',
 						action: 'Search talents',
+					},
+					{
+						name: 'Search Video Prompts',
+						value: 'searchVideoPrompts',
+						description: 'Semantically search video generation prompts by a free-text brief',
+						action: 'Search video prompts',
 					},
 				],
 				default: 'getAvailableTalents',
@@ -834,6 +846,88 @@ export class Dreem implements INodeType {
 			},
 
 			// --------------------------------------------------------
+			// Library > Search Shots — Fields
+			// --------------------------------------------------------
+			// Free-text brief for semantic search
+			{
+				displayName: 'Search Keyword',
+				name: 'shotSearchKeyword',
+				type: 'string',
+				displayOptions: {
+					show: {
+						resource: ['library'],
+						operation: ['searchShots'],
+					},
+				},
+				default: '',
+				placeholder: 'e.g., confident walking full body',
+				description:
+					'Free-text brief describing the shot (pose). Leave empty to return the newest shots instead of a semantic ranking.',
+			},
+
+			// Shot type scope for semantic search
+			{
+				displayName: 'Shot Type',
+				name: 'shotSearchType',
+				type: 'options',
+				displayOptions: {
+					show: {
+						resource: ['library'],
+						operation: ['searchShots'],
+					},
+				},
+				options: [
+					{ name: 'All', value: -1 },
+					{ name: 'Pack Shot (Product)', value: 0 },
+					{ name: 'Virtual Model', value: 1 },
+				],
+				default: -1,
+				description:
+					'Limit the search to one shot type. Video shots are not in the semantic index, so they are never returned.',
+			},
+
+			// Gender for semantic search (applies to Virtual Model shots only)
+			{
+				displayName: 'Gender',
+				name: 'shotSearchGender',
+				type: 'options',
+				displayOptions: {
+					show: {
+						resource: ['library'],
+						operation: ['searchShots'],
+						shotSearchType: [-1, 1],
+					},
+				},
+				options: [
+					{ name: 'Any', value: 0 },
+					{ name: 'Female', value: 2 },
+					{ name: 'Male', value: 1 },
+					{ name: 'Unisex', value: 3 },
+				],
+				default: 0,
+				description: 'Filter by gender. Applied to Virtual Model shots only, ignored otherwise.',
+			},
+
+			// Limit (top-K) for semantic search
+			{
+				displayName: 'Limit',
+				name: 'shotSearchLimit',
+				type: 'number',
+				displayOptions: {
+					show: {
+						resource: ['library'],
+						operation: ['searchShots'],
+					},
+				},
+				default: 5,
+				description: 'Number of top-ranked matches to return (maps to page size, clamped 1–20)',
+				typeOptions: {
+					minValue: 1,
+					maxValue: 20,
+				},
+			},
+
+			// --------------------------------------------------------
 			// Library > Get Video Prompts — Fields
 			// --------------------------------------------------------			// Gender Filter
 			{
@@ -908,6 +1002,67 @@ export class Dreem implements INodeType {
 				typeOptions: {
 					minValue: 1,
 					maxValue: 100,
+				},
+			},
+
+			// --------------------------------------------------------
+			// Library > Search Video Prompts — Fields
+			// --------------------------------------------------------
+			// Gender for semantic search (required hard filter)
+			{
+				displayName: 'Gender',
+				name: 'promptSearchGender',
+				type: 'options',
+				required: true,
+				displayOptions: {
+					show: {
+						resource: ['library'],
+						operation: ['searchVideoPrompts'],
+					},
+				},
+				options: [
+					{ name: 'Female', value: 2 },
+					{ name: 'Male', value: 1 },
+					{ name: 'Unisex', value: 3 },
+				],
+				default: 3,
+				description:
+					'Required hard filter, not a preference. Male returns male prompts only and does not include unisex ones — choose Unisex to search unisex prompts.',
+			},
+
+			// Free-text brief for semantic search
+			{
+				displayName: 'Search Keyword',
+				name: 'promptSearchKeyword',
+				type: 'string',
+				displayOptions: {
+					show: {
+						resource: ['library'],
+						operation: ['searchVideoPrompts'],
+					},
+				},
+				default: '',
+				placeholder: 'e.g., slow orbit around the product',
+				description:
+					'Free-text brief describing the motion. Leave empty to return the newest prompts instead of a semantic ranking.',
+			},
+
+			// Limit (top-K) for semantic search
+			{
+				displayName: 'Limit',
+				name: 'promptSearchLimit',
+				type: 'number',
+				displayOptions: {
+					show: {
+						resource: ['library'],
+						operation: ['searchVideoPrompts'],
+					},
+				},
+				default: 5,
+				description: 'Number of top-ranked matches to return (maps to page size, clamped 1–20)',
+				typeOptions: {
+					minValue: 1,
+					maxValue: 20,
 				},
 			},
 
@@ -1417,6 +1572,49 @@ export class Dreem implements INodeType {
 								pairedItem: { item: i },
 							});
 						}
+					} else if (operation === 'searchShots') {
+						const shotSearchKeyword = this.getNodeParameter('shotSearchKeyword', i, '') as string;
+						const shotSearchType = this.getNodeParameter('shotSearchType', i) as number;
+						const shotSearchGender = this.getNodeParameter('shotSearchGender', i, 0) as number;
+						const shotSearchLimit = this.getNodeParameter('shotSearchLimit', i) as number;
+
+						// pageNumber is only present for the response envelope shape; the endpoint
+						// always returns the first top-K page of semantically ranked matches.
+						const queryParams: IDataObject = {
+							pageNumber: 1,
+							pageSize: shotSearchLimit,
+						};
+						// Only include keyword if provided (empty = newest shots, no ranking)
+						if (shotSearchKeyword) {
+							queryParams.keyword = shotSearchKeyword;
+						}
+						// Only include shotType if not "All" (-1)
+						if (shotSearchType !== -1) {
+							queryParams.shotType = shotSearchType;
+						}
+						// Gender applies to Model shots only; the API ignores it otherwise
+						if (shotSearchGender !== 0) {
+							queryParams.gender = shotSearchGender;
+						}
+
+						const apiResponse = await this.helpers.httpRequestWithAuthentication.call(
+							this,
+							credentialType,
+							{
+								method: 'GET',
+								baseURL,
+								url: '/studio/shots/search',
+								qs: queryParams,
+							},
+						);
+
+						const shots = extractItems(apiResponse, { allowSingleObject: true });
+						for (const shot of shots) {
+							returnData.push({
+								json: shot,
+								pairedItem: { item: i },
+							});
+						}
 					} else if (operation === 'getVideoPrompts') {
 						const gender = this.getNodeParameter('gender', i) as number;
 						const keyword = this.getNodeParameter('keyword', i, '') as string;
@@ -1482,6 +1680,49 @@ export class Dreem implements INodeType {
 						for (const talent of talents) {
 							returnData.push({
 								json: talent,
+								pairedItem: { item: i },
+							});
+						}
+					} else if (operation === 'searchVideoPrompts') {
+						const promptSearchGender = this.getNodeParameter('promptSearchGender', i) as number;
+						const promptSearchKeyword = this.getNodeParameter(
+							'promptSearchKeyword',
+							i,
+							'',
+						) as string;
+						const promptSearchLimit = this.getNodeParameter('promptSearchLimit', i) as number;
+
+						// Unlike POST /video-prompts/list, the search endpoint is a GET and pages
+						// with `pageNumber` (not `pageNum`). pageNumber is only present for the
+						// response envelope shape; the endpoint always returns the first top-K page.
+						const queryParams: IDataObject = {
+							gender: promptSearchGender,
+							pageNumber: 1,
+							pageSize: promptSearchLimit,
+						};
+						// Only include keyword if provided (empty = newest prompts, no ranking)
+						if (promptSearchKeyword) {
+							queryParams.keyword = promptSearchKeyword;
+						}
+
+						const apiResponse = await this.helpers.httpRequestWithAuthentication.call(
+							this,
+							credentialType,
+							{
+								method: 'GET',
+								baseURL,
+								url: '/studio/video-prompts/search',
+								qs: queryParams,
+							},
+						);
+
+						// No sourceType filter here, unlike getVideoPrompts: the ranked top-K covers
+						// both SYSTEM and tenant-owned CUSTOM prompts, and dropping CUSTOM ones would
+						// silently return fewer than the requested limit.
+						const prompts = extractItems(apiResponse, { allowSingleObject: true });
+						for (const prompt of prompts) {
+							returnData.push({
+								json: prompt,
 								pairedItem: { item: i },
 							});
 						}
