@@ -784,7 +784,7 @@ export class Dreem implements INodeType {
 				},
 				options: [
 					{ name: 'All', value: -1 },
-					{ name: 'Pack Shot (Product)', value: 0 },
+					{ name: 'Product Shot', value: 0 },
 					{ name: 'Video', value: 5 },
 					{ name: 'Virtual Model', value: 1 },
 				],
@@ -878,7 +878,7 @@ export class Dreem implements INodeType {
 				},
 				options: [
 					{ name: 'All', value: -1 },
-					{ name: 'Pack Shot (Product)', value: 0 },
+					{ name: 'Product Shot', value: 0 },
 					{ name: 'Virtual Model', value: 1 },
 				],
 				default: -1,
