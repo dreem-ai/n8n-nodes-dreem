@@ -24,7 +24,7 @@ export class DreemOAuth2Api implements ICredentialType {
 			displayName: 'Client ID',
 			name: 'clientId',
 			type: 'hidden',
-			default: 'dreem',
+			default: 'public_api',
 			description:
 				'The OAuth2 Client ID for n8n integration. Pre-configured for standard n8n usage.',
 		},
@@ -64,17 +64,17 @@ export class DreemOAuth2Api implements ICredentialType {
 				},
 				{
 					name: 'Generation Only',
-					value: 'openid offline_access generations:write generations:read requests:read',
+					value: 'openid offline_access public_api_generations_only',
 					description: 'Create and monitor AI generations',
 				},
 				{
 					name: 'Read Only',
-					value: 'openid offline_access generations:read talents:read shots:read requests:read',
+					value: 'openid offline_access public_api_read_only',
 					description: 'View resources and generation history',
 				},
 				{
 					name: 'Custom',
-					value: 'custom',
+					value: 'openid offline_access public_api_custom',
 					description: 'Specify custom scopes',
 				},
 			],
