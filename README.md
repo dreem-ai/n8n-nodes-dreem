@@ -39,6 +39,11 @@ All generation operations support configurable output format (PNG/JPEG for image
 - **Get Available Talents** — List all available AI models for virtual model generation. Supports filtering by gender and keyword search.
 - **Get Available Shots** — List all available shots for image generation. Supports filtering by shot type and keyword search.
 - **Get Video Prompts** — Browse available video animation prompts for video generation. Supports filtering by gender, keyword search, and pagination.
+- **Search Talents** — Semantically search AI models from a free-text brief, e.g. `scandinavian blonde 20s`. Requires a gender (Male or Female).
+- **Search Shots** — Semantically rank shots (poses) against a free-text brief, e.g. `confident walking full body`. Returns the top matches ordered by relevance rather than catalogue order, with optional shot type and gender filters.
+- **Search Video Prompts** — Semantically rank video motion prompts against a free-text brief, e.g. `slow orbit around the product`. Gender is required and acts as a hard filter.
+
+The three **Search** operations return the top matches (1–20) ordered by semantic relevance. Leaving the keyword empty returns the newest entries instead of a ranking.
 
 ### Task
 
