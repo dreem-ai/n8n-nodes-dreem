@@ -99,7 +99,11 @@ export class Dreem implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'Dreem',
 		name: 'dreem',
-		icon: 'file:dreem.svg',
+		// dreem.dark.svg is currently a copy of dreem.svg: the mark is a single brand green
+		// that reads on light and dark backgrounds alike, but the themed form is required by
+		// @n8n/community-nodes/icon-prefer-themed-variants and icon-validation rejects both
+		// keys pointing at one path. Swap in a real dark-theme logo here when brand ships one.
+		icon: { light: 'file:dreem.svg', dark: 'file:dreem.dark.svg' },
 		group: ['transform'],
 		version: 1,
 		subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
@@ -1762,8 +1766,12 @@ export class Dreem implements INodeType {
 					});
 					continue;
 				}
-				if (error instanceof NodeApiError || error instanceof NodeOperationError) {
-					throw error;
+				// Always re-wrap: both constructors return the input untouched when handed an
+				// instance of their own class, so already-typed node errors pass through with
+				// their message intact. A bare `throw error` would trip
+				// @n8n/community-nodes/require-node-api-error, which can't see the type guard.
+				if (error instanceof NodeOperationError) {
+					throw new NodeOperationError(this.getNode(), error, { itemIndex: i });
 				}
 				throw new NodeApiError(this.getNode(), error as JsonObject, { itemIndex: i });
 			}
